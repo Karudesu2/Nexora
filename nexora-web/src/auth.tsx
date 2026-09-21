@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState } from "react";
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import api from "./services/api";
 
@@ -7,6 +8,10 @@ const tokenStorageKey = "nexora_token";
 interface AuthUser {
   id: number;
   name: string;
+  first_name?: string | null;
+  middle_name?: string | null;
+  last_name?: string | null;
+  role_codes?: string[];
   email: string;
 }
 
@@ -16,10 +21,14 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>;
   register: (payload: RegistrationPayload) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 interface RegistrationPayload {
   name: string;
+  first_name: string;
+  middle_name?: string;
+  last_name?: string;
   email: string;
   password: string;
   password_confirmation: string;
@@ -44,6 +53,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const refreshUser = useCallback(async () => {
+    const response = await api.get<ProfileResponse>("/auth/profile");
+    setUser(response.data.data.user);
+  }, []);
+
   useEffect(() => {
     const restoreSession = async () => {
       if (!sessionStorage.getItem(tokenStorageKey)) {
@@ -52,8 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const response = await api.get<ProfileResponse>("/auth/profile");
-        setUser(response.data.data.user);
+        await refreshUser();
       } catch {
         sessionStorage.removeItem(tokenStorageKey);
       } finally {
@@ -62,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     void restoreSession();
-  }, []);
+  }, [refreshUser]);
 
   const login = async (email: string, password: string) => {
     const response = await api.post<AuthenticationResponse>("/auth/login", {
@@ -91,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
