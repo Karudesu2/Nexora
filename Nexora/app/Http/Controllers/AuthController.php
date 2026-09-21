@@ -3,14 +3,40 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
-class AuthController extends Controller
+class AuthController extends ApiController
 {
+    /**
+     * Register a teacher account and issue a Sanctum token.
+     */
+    public function register(RegisterRequest $request): JsonResponse
+    {
+        $registration = DB::transaction(function () use ($request): array {
+            $user = User::create($request->validated());
+            $teacherRole = Role::query()->firstOrCreate(
+                ['code' => 'teacher'],
+                ['name' => 'Teacher']
+            );
+
+            $user->roles()->syncWithoutDetaching([$teacherRole->id]);
+
+            return [
+                'user' => $user,
+                'token' => $user->createToken('nexora-web')->plainTextToken,
+            ];
+        });
+
+        return $this->success($registration, 'Registration successful.', 201);
+    }
+
     /**
      * Login user.
      */
@@ -26,21 +52,16 @@ class AuthController extends Controller
             ]);
         }
 
-        // Remove previous NEXORA web tokens.
         $user->tokens()
             ->where('name', 'nexora-web')
             ->delete();
 
         $token = $user->createToken('nexora-web')->plainTextToken;
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Login successful.',
-            'data' => [
-                'user' => $user,
-                'token' => $token,
-            ],
-        ]);
+        return $this->success([
+            'user' => $user,
+            'token' => $token,
+        ], 'Login successful.');
     }
 
     /**
@@ -50,10 +71,7 @@ class AuthController extends Controller
     {
         $request->user()?->currentAccessToken()?->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Logout successful.',
-        ]);
+        return $this->success(message: 'Logout successful.');
     }
 
     /**
@@ -61,12 +79,8 @@ class AuthController extends Controller
      */
     public function profile(Request $request): JsonResponse
     {
-        return response()->json([
-            'success' => true,
-            'message' => 'Profile retrieved successfully.',
-            'data' => [
-                'user' => $request->user(),
-            ],
-        ]);
+        return $this->success([
+            'user' => $request->user(),
+        ], 'Profile retrieved successfully.');
     }
 }

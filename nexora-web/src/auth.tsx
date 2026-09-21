@@ -14,10 +14,18 @@ interface AuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  register: (payload: RegistrationPayload) => Promise<void>;
   logout: () => Promise<void>;
 }
 
-interface LoginResponse {
+interface RegistrationPayload {
+  name: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
+}
+
+interface AuthenticationResponse {
   data: {
     token: string;
     user: AuthUser;
@@ -57,10 +65,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await api.post<LoginResponse>("/auth/login", {
+    const response = await api.post<AuthenticationResponse>("/auth/login", {
       email,
       password,
     });
+
+    sessionStorage.setItem(tokenStorageKey, response.data.data.token);
+    setUser(response.data.data.user);
+  };
+
+  const register = async (payload: RegistrationPayload) => {
+    const response = await api.post<AuthenticationResponse>("/auth/register", payload);
 
     sessionStorage.setItem(tokenStorageKey, response.data.data.token);
     setUser(response.data.data.user);
@@ -76,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -6,7 +6,7 @@ use App\Models\Lesson;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class ReportController extends Controller
+class ReportController extends ApiController
 {
     /**
      * Basic lesson report.
@@ -23,13 +23,12 @@ class ReportController extends Controller
             ->orderBy('lesson_date')
             ->get();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Lesson report generated successfully.',
-            'data' => [
+        return $this->success(
+            [
                 'total' => $lessons->count(),
                 'lessons' => $lessons,
             ],
-        ]);
+            'Lesson report generated successfully.'
+        );
     }
 }

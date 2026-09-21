@@ -6,7 +6,7 @@ use App\Models\CalendarEvent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class CalendarController extends Controller
+class CalendarController extends ApiController
 {
     /**
      * Display calendar events.
@@ -35,10 +35,7 @@ class CalendarController extends Controller
             ->orderBy('start_date')
             ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => $events,
-        ]);
+        return $this->success($events, 'Calendar events retrieved successfully.');
     }
 
     /**
@@ -61,11 +58,7 @@ class CalendarController extends Controller
 
         $event = CalendarEvent::create($data);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Calendar event created successfully.',
-            'data' => $event,
-        ], 201);
+        return $this->success($event, 'Calendar event created successfully.', 201);
     }
 
     /**
@@ -75,10 +68,7 @@ class CalendarController extends Controller
     {
         $this->authorize('view', $calendarEvent);
 
-        return response()->json([
-            'success' => true,
-            'data' => $calendarEvent,
-        ]);
+        return $this->success($calendarEvent, 'Calendar event retrieved successfully.');
     }
 
     /**
@@ -101,11 +91,7 @@ class CalendarController extends Controller
 
         $calendarEvent->update($data);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Calendar event updated successfully.',
-            'data' => $calendarEvent->refresh(),
-        ]);
+        return $this->success($calendarEvent->refresh(), 'Calendar event updated successfully.');
     }
 
     /**
@@ -117,9 +103,6 @@ class CalendarController extends Controller
 
         $calendarEvent->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Calendar event deleted successfully.',
-        ]);
+        return $this->success(message: 'Calendar event deleted successfully.');
     }
 }

@@ -6,7 +6,7 @@ use App\Services\PacingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class PacingController extends Controller
+class PacingController extends ApiController
 {
     public function __construct(
         private readonly PacingService $pacingService
@@ -21,9 +21,6 @@ class PacingController extends Controller
             $request->user()->id
         );
 
-        return response()->json([
-            'success' => true,
-            'data' => $pacing,
-        ]);
+        return $this->success($pacing, 'Pacing data retrieved successfully.');
     }
 }

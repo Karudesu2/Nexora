@@ -18,6 +18,47 @@ class AuthorizationTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_protected_api_endpoints_return_a_consistent_unauthenticated_response(): void
+    {
+        $this->getJson('/api/v1/dashboard')
+            ->assertUnauthorized()
+            ->assertExactJson([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ]);
+    }
+
+    public function test_user_can_login_and_retrieve_their_profile(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'teacher@example.test',
+        ]);
+
+        $loginResponse = $this->postJson('/api/v1/auth/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.user.id', $user->id);
+
+        $this->withToken($loginResponse->json('data.token'))
+            ->getJson('/api/v1/auth/profile')
+            ->assertOk()
+            ->assertJsonPath('data.user.id', $user->id);
+    }
+
+    public function test_lesson_validation_errors_use_the_standard_api_response(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->postJson('/api/v1/lessons', [])
+            ->assertUnprocessable()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Validation failed.')
+            ->assertJsonStructure(['errors' => ['school_year_id', 'term_id', 'grade_id', 'subject_id', 'section', 'title', 'lesson_date']]);
+    }
+
     public function test_dashboard_counts_only_the_authenticated_teachers_assessments(): void
     {
         $teacher = User::factory()->create();

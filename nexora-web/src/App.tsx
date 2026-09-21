@@ -3,6 +3,7 @@ import MainLayout from "./layouts/MainLayout";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import { LoginPage } from "./LoginPage";
 import { ProtectedRoute } from "./ProtectedRoute";
+import { RegisterPage } from "./RegisterPage";
 
 function Calendar() {
   return <div>Calendar</div>;
@@ -36,6 +37,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
           <Route path="/" element={<Dashboard />} />

@@ -6,7 +6,7 @@ use App\Models\Competency;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class CompetencyController extends Controller
+class CompetencyController extends ApiController
 {
     /**
      * Display competencies.
@@ -45,10 +45,7 @@ class CompetencyController extends Controller
             ->orderBy('code')
             ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => $competencies,
-        ]);
+        return $this->success($competencies, 'Competencies retrieved successfully.');
     }
 
     /**
@@ -56,9 +53,6 @@ class CompetencyController extends Controller
      */
     public function show(Competency $competency): JsonResponse
     {
-        return response()->json([
-            'success' => true,
-            'data' => $competency,
-        ]);
+        return $this->success($competency, 'Competency retrieved successfully.');
     }
 }

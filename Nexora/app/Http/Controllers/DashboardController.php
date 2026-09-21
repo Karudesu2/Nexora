@@ -10,7 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
-class DashboardController extends Controller
+class DashboardController extends ApiController
 {
     public function index(Request $request): JsonResponse
     {
@@ -68,10 +68,8 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Dashboard data retrieved successfully.',
-            'data' => [
+        return $this->success(
+            [
                 'teacher' => [
                     'id' => $teacher->id,
                     'name' => $teacher->name,
@@ -95,6 +93,7 @@ class DashboardController extends Controller
 
                 'calendar_events' => $calendarEvents,
             ],
-        ]);
+            'Dashboard data retrieved successfully.'
+        );
     }
 }

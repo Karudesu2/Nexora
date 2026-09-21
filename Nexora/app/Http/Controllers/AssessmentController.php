@@ -5,11 +5,16 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreAssessmentRequest;
 use App\Models\Assessment;
 use App\Models\Lesson;
+use App\Services\AssessmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class AssessmentController extends Controller
+class AssessmentController extends ApiController
 {
+    public function __construct(
+        private readonly AssessmentService $assessmentService
+    ) {}
+
     /**
      * Display assessments.
      */
@@ -29,10 +34,7 @@ class AssessmentController extends Controller
             ->orderByDesc('assessment_date')
             ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => $assessments,
-        ]);
+        return $this->success($assessments, 'Assessments retrieved successfully.');
     }
 
     /**
@@ -45,15 +47,9 @@ class AssessmentController extends Controller
 
         $this->authorize('update', $lesson);
 
-        $assessment = Assessment::create(
-            $request->validated()
-        );
+        $assessment = $this->assessmentService->create($request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Assessment created successfully.',
-            'data' => $assessment,
-        ], 201);
+        return $this->success($assessment, 'Assessment created successfully.', 201);
     }
 
     /**
@@ -68,10 +64,7 @@ class AssessmentController extends Controller
             'competencies',
         ]);
 
-        return response()->json([
-            'success' => true,
-            'data' => $assessment,
-        ]);
+        return $this->success($assessment, 'Assessment retrieved successfully.');
     }
 
     /**
@@ -83,13 +76,12 @@ class AssessmentController extends Controller
     ): JsonResponse {
         $this->authorize('update', $assessment);
 
-        $assessment->update($request->validated());
+        $assessment = $this->assessmentService->update(
+            $assessment,
+            $request->validated()
+        );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Assessment updated successfully.',
-            'data' => $assessment->refresh(),
-        ]);
+        return $this->success($assessment, 'Assessment updated successfully.');
     }
 
     /**
@@ -100,11 +92,8 @@ class AssessmentController extends Controller
         Assessment $assessment
     ): JsonResponse {
         $this->authorize('delete', $assessment);
-        $assessment->delete();
+        $this->assessmentService->delete($assessment);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Assessment deleted successfully.',
-        ]);
+        return $this->success(message: 'Assessment deleted successfully.');
     }
 }

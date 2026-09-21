@@ -8,7 +8,7 @@ use App\Services\LessonService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class LessonController extends Controller
+class LessonController extends ApiController
 {
     public function __construct(
         private readonly LessonService $lessonService
@@ -32,10 +32,7 @@ class LessonController extends Controller
             ->orderByDesc('lesson_date')
             ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => $lessons,
-        ]);
+        return $this->success($lessons, 'Lessons retrieved successfully.');
     }
 
     /**
@@ -50,11 +47,7 @@ class LessonController extends Controller
             $request->validated()
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Lesson created successfully.',
-            'data' => $lesson,
-        ], 201);
+        return $this->success($lesson, 'Lesson created successfully.', 201);
     }
 
     /**
@@ -77,10 +70,7 @@ class LessonController extends Controller
             'assessments',
         ]);
 
-        return response()->json([
-            'success' => true,
-            'data' => $lesson,
-        ]);
+        return $this->success($lesson, 'Lesson retrieved successfully.');
     }
 
     /**
@@ -97,11 +87,7 @@ class LessonController extends Controller
             $request->validated()
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Lesson updated successfully.',
-            'data' => $lesson,
-        ]);
+        return $this->success($lesson, 'Lesson updated successfully.');
     }
 
     /**
@@ -115,9 +101,6 @@ class LessonController extends Controller
 
         $this->lessonService->delete($lesson);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Lesson deleted successfully.',
-        ]);
+        return $this->success(message: 'Lesson deleted successfully.');
     }
 }

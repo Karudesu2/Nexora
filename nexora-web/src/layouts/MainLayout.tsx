@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   CalendarDays,
@@ -11,6 +11,7 @@ import {
   Bell,
   UserCircle,
 } from "lucide-react";
+import { useAuth } from "../auth";
 
 const navigation = [
   {
@@ -51,6 +52,14 @@ const navigation = [
 ];
 
 export default function MainLayout() {
+  const { logout, user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login", { replace: true });
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-slate-200 bg-white">
@@ -128,10 +137,18 @@ export default function MainLayout() {
               <UserCircle size={28} strokeWidth={1.6} />
               <div className="hidden text-left sm:block">
                 <p className="text-sm font-medium text-slate-800">
-                  Teacher
+                  {user?.name}
                 </p>
-                <p className="text-xs text-slate-500">My Account</p>
+                <p className="text-xs text-slate-500">{user?.email}</p>
               </div>
+            </button>
+
+            <button
+              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              onClick={() => void handleLogout()}
+              type="button"
+            >
+              Sign out
             </button>
           </div>
         </header>

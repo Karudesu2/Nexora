@@ -11,13 +11,6 @@ class Grade extends Model
         'name',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'is_active' => 'boolean',
-        ];
-    }
-
     public function lessons(): HasMany
     {
         return $this->hasMany(Lesson::class);
