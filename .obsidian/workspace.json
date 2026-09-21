@@ -1,0 +1,204 @@
+{
+  "main": {
+    "id": "6681a74646aa08ce",
+    "type": "split",
+    "children": [
+      {
+        "id": "290d4f49319f3a39",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "02cb9fecd7bd8f85",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "nexora-mobile/node_modules/expo/node_modules/ws/README.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "README"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "43574b8a2df601f9",
+    "type": "split",
+    "children": [
+      {
+        "id": "c9683ade136c3dab",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "d9095bc5bd558d42",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "3cb76f560b0016d3",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "ecc175398928f00d",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "d654d61e7d63f9b8",
+    "type": "split",
+    "children": [
+      {
+        "id": "8b76c103850fd248",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "2bbb4d0875315464",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks"
+            }
+          },
+          {
+            "id": "5377aa54b71334f1",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links"
+            }
+          },
+          {
+            "id": "ade93628de5187c9",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "45b64aa7e16974e2",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "9cb9211381d36544",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "02cb9fecd7bd8f85",
+  "lastOpenFiles": [
+    "nexora-web/node_modules/ts-api-utils/LICENSE.md",
+    "Nexora/vendor/laravel/boost/resources/icons/boost.svg",
+    "Nexora/vendor/laravel/boost/resources/icons",
+    "Nexora/vendor/laravel/boost/resources",
+    "Nexora/vendor/laravel/mcp/resources/boost/skills/mcp-development/references/app.md",
+    "Nexora/vendor/laravel/mcp/resources/views/mcp/components/app.blade.php",
+    "Nexora/vendor/laravel/mcp/resources/boost/skills/mcp-development/SKILL.blade.php",
+    "Nexora/vendor/laravel/mcp/resources/boost/skills/mcp-development/references",
+    "Nexora/vendor/laravel/mcp/resources/views/mcp/components",
+    "Nexora/vendor/laravel/mcp/resources/views/mcp/authorize.blade.php",
+    "Nexora/vendor/laravel/mcp/resources/boost/skills/mcp-development",
+    "Nexora/vendor/laravel/mcp/resources/views/mcp",
+    "Nexora/vendor/laravel/mcp/resources/js/mcp-sdk.min.js"
+  ]
+}
