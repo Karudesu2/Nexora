@@ -1,5 +1,13 @@
+
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import type { ReactNode } from "react";
 import api from "./services/api";
 
@@ -13,15 +21,6 @@ interface AuthUser {
   last_name?: string | null;
   role_codes?: string[];
   email: string;
-}
-
-interface AuthContextValue {
-  user: AuthUser | null;
-  isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (payload: RegistrationPayload) => Promise<void>;
-  logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
 }
 
 interface RegistrationPayload {
@@ -47,20 +46,36 @@ interface ProfileResponse {
   };
 }
 
+interface AuthContextValue {
+  user: AuthUser | null;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (payload: RegistrationPayload) => Promise<void>;
+  logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
+}
+
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const refreshUser = useCallback(async () => {
     const response = await api.get<ProfileResponse>("/auth/profile");
+
     setUser(response.data.data.user);
   }, []);
 
   useEffect(() => {
     const restoreSession = async () => {
-      if (!sessionStorage.getItem(tokenStorageKey)) {
+      const token = localStorage.getItem(tokenStorageKey);
+
+      if (!token) {
         setIsLoading(false);
         return;
       }
@@ -68,7 +83,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         await refreshUser();
       } catch {
-        sessionStorage.removeItem(tokenStorageKey);
+        localStorage.removeItem(tokenStorageKey);
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -77,20 +93,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void restoreSession();
   }, [refreshUser]);
 
-  const login = async (email: string, password: string) => {
-    const response = await api.post<AuthenticationResponse>("/auth/login", {
+  const login = async (
+    email: string,
+    password: string,
+  ) => {
+   const response =
+  await api.post<AuthenticationResponse>(
+    "/auth/login",
+    {
       email,
       password,
-    });
+    },
+  );
 
-    sessionStorage.setItem(tokenStorageKey, response.data.data.token);
-    setUser(response.data.data.user);
+console.log("FULL RESPONSE:", response);
+console.log("RESPONSE DATA:", response.data);
+console.log("DATA.DATA:", response.data.data);
+console.log("TOKEN:", response.data.data?.token);
+
+   console.log("TOKEN EXISTS:", response.data.data?.token ? "YES" : "NO");
+
+localStorage.setItem(
+  tokenStorageKey,
+  response.data.data.token,
+);
+
+console.log(
+  "AFTER SAVE:",
+  localStorage.getItem(tokenStorageKey) ? "YES" : "NO",
+
+);
+
+setUser(response.data.data.user);
   };
 
-  const register = async (payload: RegistrationPayload) => {
-    const response = await api.post<AuthenticationResponse>("/auth/register", payload);
+  const register = async (
+    payload: RegistrationPayload,
+  ) => {
+    const response =
+      await api.post<AuthenticationResponse>(
+        "/auth/register",
+        payload,
+      );
 
-    sessionStorage.setItem(tokenStorageKey, response.data.data.token);
+    localStorage.setItem(
+      tokenStorageKey,
+      response.data.data.token,
+    );
+
     setUser(response.data.data.user);
   };
 
@@ -98,13 +148,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await api.post("/auth/logout");
     } finally {
-      sessionStorage.removeItem(tokenStorageKey);
+      localStorage.removeItem(tokenStorageKey);
       setUser(null);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout, refreshUser }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        login,
+        register,
+        logout,
+        refreshUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -114,8 +173,11 @@ export function useAuth(): AuthContextValue {
   const context = useContext(AuthContext);
 
   if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider.");
+    throw new Error(
+      "useAuth must be used within an AuthProvider.",
+    );
   }
 
   return context;
 }
+

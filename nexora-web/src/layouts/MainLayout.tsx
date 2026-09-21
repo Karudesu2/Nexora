@@ -19,6 +19,7 @@ import {
   Sun,
   Target,
   UserCircle,
+  UsersRound,
   X,
 } from "lucide-react";
 import { useAuth } from "../auth";
@@ -52,6 +53,13 @@ export default function MainLayout() {
     "administrator",
     "system_administrator",
   ].includes(role));
+  const primaryRole = user?.role_codes?.includes("system_administrator")
+    ? "System Administrator"
+    : user?.role_codes?.includes("administrator")
+      ? "Administrator"
+      : user?.role_codes?.includes("curriculum_coordinator")
+        ? "Curriculum Coordinator"
+        : "Teacher";
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100">
@@ -80,6 +88,7 @@ export default function MainLayout() {
             return <NavLink key={item.path} to={item.path} end={item.path === "/"} onClick={closeNavigation} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${isActive ? "bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"}`}><Icon size={19} strokeWidth={1.9} /><span>{item.name}</span></NavLink>;
           })}
           {canManageAcademicContext ? <NavLink to="/administration" onClick={closeNavigation} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${isActive ? "bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"}`}><SlidersHorizontal size={19} strokeWidth={1.9} /><span>Academic setup</span></NavLink> : null}
+          {canManageAcademicContext ? <NavLink to="/administration/users" onClick={closeNavigation} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${isActive ? "bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"}`}><UsersRound size={19} strokeWidth={1.9} /><span>User management</span></NavLink> : null}
         </nav>
 
         <div className="mt-auto border-t border-slate-200/80 p-4 dark:border-slate-800">
@@ -98,7 +107,7 @@ export default function MainLayout() {
             <button aria-label="Notifications" className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white" onClick={() => navigate("/notifications")} type="button"><Bell size={20} strokeWidth={1.8} /></button>
             <button aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`} className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white" onClick={toggleTheme} type="button">{theme === "light" ? <Moon className="size-5" /> : <Sun className="size-5" />}</button>
             <div className="hidden h-8 w-px bg-slate-200 dark:bg-slate-800 sm:block" />
-            <button className="flex items-center gap-2 rounded-xl px-2 py-1.5 text-left hover:bg-slate-100 dark:hover:bg-slate-900" type="button"><UserCircle className="size-8 text-slate-500 dark:text-slate-400" strokeWidth={1.5} /><span className="hidden sm:block"><span className="block text-sm font-semibold text-slate-800 dark:text-slate-100">{user?.name}</span><span className="block text-xs text-slate-500 dark:text-slate-400">Teacher</span></span></button>
+            <button className="flex items-center gap-2 rounded-xl px-2 py-1.5 text-left hover:bg-slate-100 dark:hover:bg-slate-900" type="button"><UserCircle className="size-8 text-slate-500 dark:text-slate-400" strokeWidth={1.5} /><span className="hidden sm:block"><span className="block text-sm font-semibold text-slate-800 dark:text-slate-100">{user?.name}</span><span className="block text-xs text-slate-500 dark:text-slate-400">{primaryRole}</span></span></button>
             <button aria-label="Sign out" className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white" onClick={() => void handleLogout()} type="button"><LogOut className="size-4" /></button>
           </div>
         </header>

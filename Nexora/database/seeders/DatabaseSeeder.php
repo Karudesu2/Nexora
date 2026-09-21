@@ -19,10 +19,10 @@ class DatabaseSeeder extends Seeder
         $this->call(RoleSeeder::class);
 
         $user = User::query()->firstOrCreate(
-            ['email' => 'test@example.com'],
+            ['email' => 'testteacher@nexora.test'],
             [
-                'name' => 'Test User',
-                'password' => 'password',
+                'name' => 'Test Teacher',
+                'password' => 'password123',
             ]
         );
 

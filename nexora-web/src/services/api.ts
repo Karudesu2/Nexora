@@ -9,7 +9,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem("nexora_token");
+  const token = localStorage.getItem("nexora_token");
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -22,7 +22,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      sessionStorage.removeItem("nexora_token");
+      localStorage.removeItem("nexora_token");
     }
 
     return Promise.reject(error);
@@ -30,4 +30,3 @@ api.interceptors.response.use(
 );
 
 export default api;
-

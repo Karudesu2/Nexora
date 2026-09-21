@@ -8,6 +8,7 @@ import { ModulePage, PacingPage, ReportsPage, SettingsPage } from "./pages/Modul
 import { AlignmentPage, AssessmentsPage, LessonsPage, NotificationsPage, ResourcesPage } from "./pages/TeachingPages";
 import { AdministrationPage } from "./pages/AdministrationPage";
 import { CalendarPage } from "./pages/CalendarPage";
+import { UserManagementPage } from "./pages/UserManagementPage";
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/alignment" element={<AlignmentPage />} />
           <Route path="/administration" element={<AdministrationPage />} />
+          <Route path="/administration/users" element={<UserManagementPage />} />
           <Route path="/pacing" element={<PacingPage />} />
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/settings" element={<SettingsPage />} />

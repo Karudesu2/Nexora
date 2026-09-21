@@ -24,15 +24,15 @@ export function CalendarPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({ schoolYearId: "", termId: "", title: "", type: "Holiday", start: "", end: "", description: "", instructional: false });
 
-  const load = useCallback(async () => {
-    const eventRequest = api.get<ApiResponse<CalendarEvent[]>>("/calendar");
-    const contextRequest = canManageCalendar
-      ? api.get<ApiResponse<PlanningContext>>("/planning-context")
-      : null;
-    const [eventResponse, contextResponse] = await Promise.all([eventRequest, contextRequest]);
-    setEvents(eventResponse.data.data);
-    if (contextResponse) setContext(contextResponse.data.data);
-  }, [canManageCalendar]);
+const load = useCallback(async () => {
+  const eventRequest = api.get<ApiResponse<CalendarEvent[]>>("/calendar");
+  const contextRequest = canManageCalendar
+    ? api.get<ApiResponse<PlanningContext>>("/planning-context")
+    : null;
+  const [eventResponse, contextResponse] = await Promise.all([eventRequest, contextRequest]);
+  setEvents(eventResponse.data.data);
+  if (contextResponse) setContext(contextResponse.data.data);
+}, [canManageCalendar]);
 
   useEffect(() => { void load().catch((loadError: unknown) => setError(getApiErrorMessage(loadError, "Calendar events could not be loaded."))).finally(() => setIsLoading(false)); }, [load]);
 

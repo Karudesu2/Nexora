@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AcademicContextController;
+use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AlignmentController;
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AuthController;
@@ -85,6 +86,21 @@ Route::prefix('v1')->group(function () {
         Route::get('/admin/academic-context', [
             AcademicContextController::class,
             'index',
+        ]);
+
+        Route::get('/admin/users', [
+            AdminUserController::class,
+            'index',
+        ]);
+
+        Route::get('/admin/users/{user}', [
+            AdminUserController::class,
+            'show',
+        ]);
+
+        Route::patch('/admin/users/{user}/role', [
+            AdminUserController::class,
+            'updateRole',
         ]);
 
         Route::post('/admin/school-years', [

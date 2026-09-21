@@ -48,6 +48,19 @@ class AuthorizationTest extends TestCase
             ->assertJsonPath('data.user.id', $user->id);
     }
 
+    public function test_seeded_teacher_can_log_in_with_the_documented_credentials(): void
+    {
+        $this->seed();
+
+        $this->postJson('/api/v1/auth/login', [
+            'email' => 'testteacher@nexora.test',
+            'password' => 'password123',
+        ])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.user.email', 'testteacher@nexora.test');
+    }
+
     public function test_lesson_validation_errors_use_the_standard_api_response(): void
     {
         Sanctum::actingAs(User::factory()->create());
