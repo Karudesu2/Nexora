@@ -47,6 +47,17 @@ class StoreAssessmentRequest extends FormRequest
                 'nullable',
                 'string',
             ],
+
+            'competency_ids' => [
+                'nullable',
+                'array',
+                'max:20',
+            ],
+
+            'competency_ids.*' => [
+                'integer',
+                'exists:competencies,id',
+            ],
         ];
     }
 }

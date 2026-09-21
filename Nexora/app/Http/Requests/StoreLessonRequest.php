@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Term;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class StoreLessonRequest extends FormRequest
 {
@@ -64,6 +66,29 @@ class StoreLessonRequest extends FormRequest
                 'nullable',
                 'string',
             ],
+
+            'differentiation' => [
+                'nullable',
+                'string',
+            ],
         ];
+    }
+
+    public function after(): array
+    {
+        return [function (Validator $validator): void {
+            if ($validator->errors()->hasAny(['school_year_id', 'term_id'])) {
+                return;
+            }
+
+            $term = Term::find($this->integer('term_id'));
+
+            if ($term && $term->school_year_id !== $this->integer('school_year_id')) {
+                $validator->errors()->add(
+                    'term_id',
+                    'The selected term must belong to the selected school year.'
+                );
+            }
+        }];
     }
 }

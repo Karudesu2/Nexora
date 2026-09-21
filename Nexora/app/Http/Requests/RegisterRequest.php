@@ -15,6 +15,21 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'first_name' => [
+                'required',
+                'string',
+                'max:100',
+            ],
+            'middle_name' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+            'last_name' => [
+                'required',
+                'string',
+                'max:100',
+            ],
             'name' => [
                 'required',
                 'string',
@@ -37,8 +52,20 @@ class RegisterRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $firstName = Str::squish((string) $this->input('first_name'));
+        $middleName = Str::squish((string) $this->input('middle_name'));
+        $lastName = Str::squish((string) $this->input('last_name'));
+
         $this->merge([
-            'email' => Str::lower((string) $this->input('email')),
+            'first_name' => $firstName,
+            'middle_name' => $middleName ?: null,
+            'last_name' => $lastName,
+            'name' => Str::squish(implode(' ', array_filter([
+                $firstName,
+                $middleName,
+                $lastName,
+            ]))),
+            'email' => Str::lower(trim((string) $this->input('email'))),
         ]);
     }
 

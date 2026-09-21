@@ -29,8 +29,8 @@ export function RegisterPage() {
       .filter(Boolean)
       .join(" ");
 
-    if (!firstName.trim()) {
-      setError("Enter your first name.");
+    if (!firstName.trim() || !lastName.trim()) {
+      setError("Enter your first and last name.");
       return;
     }
 
@@ -46,7 +46,7 @@ export function RegisterPage() {
         name,
         first_name: firstName.trim(),
         middle_name: middleName.trim() || undefined,
-        last_name: lastName.trim() || undefined,
+        last_name: lastName.trim(),
         email,
         password,
         password_confirmation: passwordConfirmation,
@@ -73,7 +73,41 @@ export function RegisterPage() {
           <div className="mx-auto w-full max-w-md"><div className="lg:hidden"><p className="text-sm font-semibold tracking-[0.2em] text-sky-700">NEXORA</p><p className="mt-2 text-sm text-slate-500">Plan. Align. Teach.</p></div><p className="mt-7 text-sm font-medium text-slate-500 lg:mt-0">Create your teacher workspace</p><h2 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">Create an account</h2><p className="mt-3 leading-6 text-slate-600">Start planning with a workspace that keeps every lesson connected.</p>
 
         <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
-          <div className="grid gap-5 sm:grid-cols-3"><label className="block text-sm font-medium text-slate-700">First name<input autoComplete="given-name" className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-600 focus:ring-4 focus:ring-sky-100" onChange={(event) => setFirstName(event.target.value)} required type="text" value={firstName} /></label><label className="block text-sm font-medium text-slate-700">Middle name <span className="font-normal text-slate-400">(optional)</span><input autoComplete="additional-name" className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-600 focus:ring-4 focus:ring-sky-100" onChange={(event) => setMiddleName(event.target.value)} type="text" value={middleName} /></label><label className="block text-sm font-medium text-slate-700">Last name <span className="font-normal text-slate-400">(optional)</span><input autoComplete="family-name" className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-600 focus:ring-4 focus:ring-sky-100" onChange={(event) => setLastName(event.target.value)} type="text" value={lastName} /></label></div>
+          <fieldset className="grid gap-5 sm:grid-cols-2">
+            <legend className="sr-only">Your name</legend>
+            <label className="flex min-w-0 flex-col gap-1.5 text-sm font-medium text-slate-700">
+              <span>First name</span>
+              <input
+                autoComplete="given-name"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-600 focus:ring-4 focus:ring-sky-100"
+                onChange={(event) => setFirstName(event.target.value)}
+                required
+                type="text"
+                value={firstName}
+              />
+            </label>
+            <label className="flex min-w-0 flex-col gap-1.5 text-sm font-medium text-slate-700">
+              <span className="flex items-center justify-between gap-2">Middle name <span className="font-normal text-slate-400">Optional</span></span>
+              <input
+                autoComplete="additional-name"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-600 focus:ring-4 focus:ring-sky-100"
+                onChange={(event) => setMiddleName(event.target.value)}
+                type="text"
+                value={middleName}
+              />
+            </label>
+            <label className="flex min-w-0 flex-col gap-1.5 text-sm font-medium text-slate-700 sm:col-span-2">
+              <span>Last name</span>
+              <input
+                autoComplete="family-name"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-600 focus:ring-4 focus:ring-sky-100"
+                onChange={(event) => setLastName(event.target.value)}
+                required
+                type="text"
+                value={lastName}
+              />
+            </label>
+          </fieldset>
 
           <label className="block text-sm font-medium text-slate-700">
             Email

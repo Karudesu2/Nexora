@@ -21,6 +21,7 @@ class Lesson extends Model
         'lesson_date',
         'status',
         'content',
+        'differentiation',
     ];
 
     protected function casts(): array

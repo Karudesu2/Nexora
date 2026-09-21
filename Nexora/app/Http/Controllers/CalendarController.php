@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\CalendarEvent;
+use App\Models\Term;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class CalendarController extends ApiController
 {
@@ -55,6 +57,18 @@ class CalendarController extends ApiController
             'description' => ['nullable', 'string'],
             'is_instructional_day' => ['boolean'],
         ]);
+
+        if (isset($data['term_id'])) {
+            $term = Term::find($data['term_id']);
+
+            if ($term && $term->school_year_id !== $data['school_year_id']) {
+                throw ValidationException::withMessages([
+                    'term_id' => [
+                        'The selected term must belong to the selected school year.',
+                    ],
+                ]);
+            }
+        }
 
         $event = CalendarEvent::create($data);
 

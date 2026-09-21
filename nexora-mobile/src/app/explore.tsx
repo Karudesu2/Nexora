@@ -1,180 +1,53 @@
-import { Image } from 'expo-image';
-import { SymbolView } from 'expo-symbols';
-import { Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useCallback, useEffect, useState } from 'react';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ExternalLink } from '@/components/external-link';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Collapsible } from '@/components/ui/collapsible';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { useAuth } from '@/auth';
 import { useTheme } from '@/hooks/use-theme';
 
-export default function TabTwoScreen() {
-  const safeAreaInsets = useSafeAreaInsets();
-  const insets = {
-    ...safeAreaInsets,
-    bottom: safeAreaInsets.bottom + BottomTabInset + Spacing.three,
-  };
+interface Lesson {
+  id: number;
+  title: string;
+  lesson_date: string;
+  status: string;
+  section: string;
+  subject?: { name: string };
+  grade?: { name: string };
+}
+
+export default function LessonsScreen() {
+  const { user, request } = useAuth();
   const theme = useTheme();
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [error, setError] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
-  const contentPlatformStyle = Platform.select({
-    android: {
-      paddingTop: insets.top,
-      paddingLeft: insets.left,
-      paddingRight: insets.right,
-      paddingBottom: insets.bottom,
-    },
-    web: {
-      paddingTop: Spacing.six,
-      paddingBottom: Spacing.four,
-    },
-  });
+  const load = useCallback(async () => {
+    if (!user) return;
+    setError('');
+    try {
+      setLessons(await request<Lesson[]>('/lessons'));
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Unable to load lessons.');
+    }
+  }, [request, user]);
 
-  return (
-    <ScrollView
-      style={[styles.scrollView, { backgroundColor: theme.background }]}
-      contentInset={insets}
-      contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}>
-      <ThemedView style={styles.container}>
-        <ThemedView style={styles.titleContainer}>
-          <ThemedText type="subtitle">Explore</ThemedText>
-          <ThemedText style={styles.centerText} themeColor="textSecondary">
-            This starter app includes example{'\n'}code to help you get started.
-          </ThemedText>
+  useEffect(() => { void load(); }, [load]);
 
-          <ExternalLink href="https://docs.expo.dev" asChild>
-            <Pressable style={({ pressed }) => pressed && styles.pressed}>
-              <ThemedView type="backgroundElement" style={styles.linkButton}>
-                <ThemedText type="link">Expo documentation</ThemedText>
-                <SymbolView
-                  tintColor={theme.text}
-                  name={{ ios: 'arrow.up.right.square', android: 'link', web: 'link' }}
-                  size={12}
-                />
-              </ThemedView>
-            </Pressable>
-          </ExternalLink>
-        </ThemedView>
+  const refresh = async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  };
 
-        <ThemedView style={styles.sectionsWrapper}>
-          <Collapsible title="File-based routing">
-            <ThemedText type="small">
-              This app has two screens: <ThemedText type="code">src/app/index.tsx</ThemedText> and{' '}
-              <ThemedText type="code">src/app/explore.tsx</ThemedText>
-            </ThemedText>
-            <ThemedText type="small">
-              The layout file in <ThemedText type="code">src/app/_layout.tsx</ThemedText> sets up
-              the tab navigator.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/router/introduction">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
+  if (!user) {
+    return <SafeAreaView style={[styles.safeArea, styles.center, { backgroundColor: theme.background }]}><Text style={[styles.title, { color: theme.text }]}>Your lessons</Text><Text style={[styles.description, { color: theme.textSecondary }]}>Sign in from the Dashboard tab to view your teaching plans.</Text></SafeAreaView>;
+  }
 
-          <Collapsible title="Android, iOS, and web support">
-            <ThemedView type="backgroundElement" style={styles.collapsibleContent}>
-              <ThemedText type="small">
-                You can open this project on Android, iOS, and the web. To open the web version,
-                press <ThemedText type="smallBold">w</ThemedText> in the terminal running this
-                project.
-              </ThemedText>
-              <Image
-                source={require('@/assets/images/tutorial-web.png')}
-                style={styles.imageTutorial}
-              />
-            </ThemedView>
-          </Collapsible>
-
-          <Collapsible title="Images">
-            <ThemedText type="small">
-              For static images, you can use the <ThemedText type="code">@2x</ThemedText> and{' '}
-              <ThemedText type="code">@3x</ThemedText> suffixes to provide files for different
-              screen densities.
-            </ThemedText>
-            <Image source={require('@/assets/images/react-logo.png')} style={styles.imageReact} />
-            <ExternalLink href="https://reactnative.dev/docs/images">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Light and dark mode components">
-            <ThemedText type="small">
-              This template has light and dark mode support. The{' '}
-              <ThemedText type="code">useColorScheme()</ThemedText> hook lets you inspect what the
-              user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Animations">
-            <ThemedText type="small">
-              This template includes an example of an animated component. The{' '}
-              <ThemedText type="code">src/components/ui/collapsible.tsx</ThemedText> component uses
-              the powerful <ThemedText type="code">react-native-reanimated</ThemedText> library to
-              animate opening this hint.
-            </ThemedText>
-          </Collapsible>
-        </ThemedView>
-        {Platform.OS === 'web' && <WebBadge />}
-      </ThemedView>
-    </ScrollView>
-  );
+  return <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}><ScrollView contentContainerStyle={styles.content} refreshControl={<RefreshControl onRefresh={() => void refresh()} refreshing={refreshing} tintColor="#0284c7" />}><Text style={[styles.eyebrow, { color: '#0284c7' }]}>NEXORA</Text><Text style={[styles.title, { color: theme.text }]}>Lesson planner</Text><Text style={[styles.description, { color: theme.textSecondary }]}>Pull down to refresh your latest lesson plans.</Text>{error ? <View style={styles.errorBox}><Text style={styles.error}>{error}</Text><Pressable onPress={() => void load()}><Text style={styles.retry}>Try again</Text></Pressable></View> : null}{!error && lessons.length === 0 ? <View style={[styles.emptyCard, { backgroundColor: theme.backgroundElement }]}><Text style={[styles.description, { color: theme.textSecondary }]}>No lesson plans yet. Create the first one in the web planner.</Text></View> : null}{lessons.map((lesson) => <View key={lesson.id} style={[styles.lessonCard, { backgroundColor: theme.backgroundElement }]}><View style={styles.cardHeader}><View style={styles.flex}><Text numberOfLines={1} style={[styles.lessonTitle, { color: theme.text }]}>{lesson.title}</Text><Text style={[styles.metadata, { color: theme.textSecondary }]}>{lesson.lesson_date} · {[lesson.grade?.name, lesson.subject?.name, lesson.section].filter(Boolean).join(' · ')}</Text></View><View style={[styles.status, lesson.status === 'Completed' ? styles.complete : styles.scheduled]}><Text style={[styles.statusText, { color: lesson.status === 'Completed' ? '#047857' : '#0369a1' }]}>{lesson.status}</Text></View></View></View>)}</ScrollView></SafeAreaView>;
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
-    flex: 1,
-  },
-  contentContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  container: {
-    maxWidth: MaxContentWidth,
-    flexGrow: 1,
-  },
-  titleContainer: {
-    gap: Spacing.three,
-    alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.six,
-  },
-  centerText: {
-    textAlign: 'center',
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-  linkButton: {
-    flexDirection: 'row',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.five,
-    justifyContent: 'center',
-    gap: Spacing.one,
-    alignItems: 'center',
-  },
-  sectionsWrapper: {
-    gap: Spacing.five,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.three,
-  },
-  collapsibleContent: {
-    alignItems: 'center',
-  },
-  imageTutorial: {
-    width: '100%',
-    aspectRatio: 296 / 171,
-    borderRadius: Spacing.three,
-    marginTop: Spacing.two,
-  },
-  imageReact: {
-    width: 100,
-    height: 100,
-    alignSelf: 'center',
-  },
+  safeArea: { flex: 1 }, center: { alignItems: 'center', justifyContent: 'center', padding: 24 }, content: { gap: 14, padding: 20, paddingBottom: 120 }, eyebrow: { fontSize: 12, fontWeight: '800', letterSpacing: 2 }, title: { fontSize: 28, fontWeight: '800', marginTop: 5 }, description: { fontSize: 14, lineHeight: 21, marginTop: 7 }, errorBox: { backgroundColor: '#fef2f2', borderRadius: 12, gap: 8, padding: 14 }, error: { color: '#dc2626', fontSize: 14 }, retry: { color: '#0284c7', fontSize: 14, fontWeight: '700' }, emptyCard: { borderRadius: 16, marginTop: 15, padding: 22 }, lessonCard: { borderRadius: 16, marginTop: 2, padding: 16 }, cardHeader: { alignItems: 'flex-start', flexDirection: 'row', gap: 10 }, flex: { flex: 1 }, lessonTitle: { fontSize: 16, fontWeight: '800' }, metadata: { fontSize: 12, lineHeight: 18, marginTop: 6 }, status: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 5 }, complete: { backgroundColor: '#d1fae5' }, scheduled: { backgroundColor: '#e0f2fe' }, statusText: { fontSize: 11, fontWeight: '700' },
 });
