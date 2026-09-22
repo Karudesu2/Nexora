@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -38,6 +39,11 @@ class User extends Authenticatable
         return $this->belongsToMany(Role::class);
     }
 
+    public function feedbackReports(): HasMany
+    {
+        return $this->hasMany(FeedbackReport::class);
+    }
+
     public function hasAnyRole(array $roleCodes): bool
     {
         return $this->roles()
@@ -47,6 +53,10 @@ class User extends Authenticatable
 
     public function isSchoolAdministrator(): bool
     {
-        return $this->hasAnyRole(['school_administrator']);
+        return $this->hasAnyRole([
+            'school_administrator',
+            'administrator',
+            'system_administrator',
+        ]);
     }
 }

@@ -7,13 +7,13 @@ import {
   CalendarDays,
   ClipboardCheck,
   ClipboardList,
-  FilePlus2,
   Gauge,
   LayoutDashboard,
   LayoutTemplate,
   LibraryBig,
   LogOut,
   Menu,
+  MessageSquareText,
   Moon,
   Search,
   Settings,
@@ -32,10 +32,10 @@ const navigation = [
   { name: "Calendar", path: "/calendar", icon: CalendarDays },
   { name: "Competency Library", path: "/competencies", icon: BookOpen },
   { name: "Lesson Planner", path: "/lessons", icon: ClipboardList },
-  { name: "Create Lesson", path: "/lessons/create", icon: FilePlus2 },
   { name: "Templates", path: "/templates", icon: LayoutTemplate },
   { name: "Assessments", path: "/assessments", icon: ClipboardCheck },
   { name: "Resources", path: "/resources", icon: LibraryBig },
+  { name: "Feedback", path: "/feedback", icon: MessageSquareText },
   { name: "Standards Alignment", path: "/alignment", icon: Target },
   { name: "Pacing Monitor", path: "/pacing", icon: Gauge },
   { name: "Reports", path: "/reports", icon: BarChart3 },
@@ -93,6 +93,7 @@ export default function MainLayout() {
             return <NavLink key={item.path} to={item.path} end={item.path === "/"} onClick={closeNavigation} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${isActive ? "bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"}`}><Icon size={19} strokeWidth={1.9} /><span>{item.name}</span></NavLink>;
           })}
           {canManageAcademicContext ? <NavLink to="/admin/dashboard" onClick={closeNavigation} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${isActive ? "bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"}`}><LayoutDashboard size={19} strokeWidth={1.9} /><span>School overview</span></NavLink> : null}
+          {canManageAcademicContext ? <NavLink to="/admin/feedback" onClick={closeNavigation} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${isActive ? "bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"}`}><MessageSquareText size={19} strokeWidth={1.9} /><span>Feedback management</span></NavLink> : null}
           {canManageAcademicContext ? <NavLink to="/administration" onClick={closeNavigation} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${isActive ? "bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"}`}><SlidersHorizontal size={19} strokeWidth={1.9} /><span>Academic setup</span></NavLink> : null}
           {canManageAcademicContext ? <NavLink to="/administration/users" onClick={closeNavigation} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${isActive ? "bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"}`}><UsersRound size={19} strokeWidth={1.9} /><span>User management</span></NavLink> : null}
         </nav>

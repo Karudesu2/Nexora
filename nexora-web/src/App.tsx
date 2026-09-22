@@ -14,13 +14,14 @@ const SettingsPage = lazy(() => import("./pages/ModulePage").then(({ SettingsPag
 const AlignmentPage = lazy(() => import("./pages/TeachingPages").then(({ AlignmentPage: Page }) => ({ default: Page })));
 const AssessmentsPage = lazy(() => import("./pages/TeachingPages").then(({ AssessmentsPage: Page }) => ({ default: Page })));
 const LessonsPage = lazy(() => import("./pages/LessonPlannerPage").then(({ LessonsPage: Page }) => ({ default: Page })));
-const CreateLessonPage = lazy(() => import("./pages/LessonPlannerPage").then(({ CreateLessonPage: Page }) => ({ default: Page })));
 const TemplatesPage = lazy(() => import("./pages/LessonPlannerPage").then(({ TemplatesPage: Page }) => ({ default: Page })));
 const NotificationsPage = lazy(() => import("./pages/TeachingPages").then(({ NotificationsPage: Page }) => ({ default: Page })));
 const ResourcesPage = lazy(() => import("./pages/TeachingPages").then(({ ResourcesPage: Page }) => ({ default: Page })));
 const AdministrationPage = lazy(() => import("./pages/AdministrationPage").then(({ AdministrationPage: Page }) => ({ default: Page })));
 const UserManagementPage = lazy(() => import("./pages/UserManagementPage").then(({ UserManagementPage: Page }) => ({ default: Page })));
 const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage").then(({ AdminDashboardPage: Page }) => ({ default: Page })));
+const FeedbackPage = lazy(() => import("./pages/FeedbackPage").then(({ FeedbackPage: Page }) => ({ default: Page })));
+const AdminFeedbackPage = lazy(() => import("./pages/FeedbackPage").then(({ AdminFeedbackPage: Page }) => ({ default: Page })));
 
 function PageLoader() {
   return <div className="flex min-h-64 items-center justify-center text-sm text-slate-500">Loading page...</div>;
@@ -37,15 +38,17 @@ export default function App() {
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/competencies" element={<ModulePage module="competencies" />} />
           <Route path="/lessons" element={<LessonsPage />} />
-          <Route path="/lessons/create" element={<CreateLessonPage />} />
+          <Route path="/lessons/create" element={<Navigate to="/lessons" replace />} />
           <Route path="/templates" element={<TemplatesPage />} />
           <Route path="/assessments" element={<AssessmentsPage />} />
           <Route path="/resources" element={<ResourcesPage />} />
+          <Route path="/feedback" element={<FeedbackPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/alignment" element={<AlignmentPage />} />
           <Route path="/administration" element={<AdministrationPage />} />
           <Route path="/administration/users" element={<UserManagementPage />} />
           <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+          <Route path="/admin/feedback" element={<AdminFeedbackPage />} />
           <Route path="/pacing" element={<PacingPage />} />
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/settings" element={<SettingsPage />} />

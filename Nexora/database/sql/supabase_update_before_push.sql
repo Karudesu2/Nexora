@@ -75,6 +75,19 @@ create table if not exists personal_access_tokens (
 create index if not exists personal_access_tokens_tokenable_type_tokenable_id_index on personal_access_tokens (tokenable_type, tokenable_id);
 create index if not exists personal_access_tokens_expires_at_index on personal_access_tokens (expires_at);
 
+create table if not exists notifications (
+    id bigserial primary key,
+    user_id bigint not null references users(id) on delete cascade,
+    title varchar(255) not null,
+    message text not null,
+    type varchar(255) null,
+    read_at timestamp null,
+    action_url text null,
+    created_at timestamp null,
+    updated_at timestamp null
+);
+create index if not exists notifications_user_id_read_at_index on notifications (user_id, read_at);
+
 create table if not exists school_years (
     id bigserial primary key,
     name varchar(255) not null,
@@ -179,6 +192,53 @@ create table if not exists lesson_versions (
     unique(lesson_id, version_number)
 );
 create index if not exists lesson_versions_lesson_id_created_at_index on lesson_versions (lesson_id, created_at);
+
+create table if not exists lesson_templates (
+    id bigserial primary key,
+    user_id bigint null references users(id) on delete set null,
+    title varchar(255) not null,
+    category varchar(120) null,
+    description text null,
+    structure jsonb null,
+    is_public boolean not null default false,
+    created_at timestamp null,
+    updated_at timestamp null
+);
+create index if not exists lesson_templates_user_id_is_public_index on lesson_templates (user_id, is_public);
+
+create table if not exists feedback_reports (
+    id bigserial primary key,
+    user_id bigint not null references users(id) on delete cascade,
+    category varchar(80) not null,
+    priority varchar(40) not null default 'Medium',
+    status varchar(40) not null default 'Submitted',
+    title varchar(255) not null,
+    description text not null,
+    affected_module varchar(255) null,
+    steps_to_reproduce text null,
+    suggested_solution text null,
+    system_information text null,
+    attachment_path text null,
+    attachment_name varchar(255) null,
+    attachment_mime varchar(255) null,
+    resolved_by bigint null references users(id) on delete set null,
+    resolved_at timestamp null,
+    created_at timestamp null,
+    updated_at timestamp null
+);
+create index if not exists feedback_reports_user_id_created_at_index on feedback_reports (user_id, created_at);
+create index if not exists feedback_reports_category_priority_status_index on feedback_reports (category, priority, status);
+
+create table if not exists feedback_updates (
+    id bigserial primary key,
+    feedback_report_id bigint not null references feedback_reports(id) on delete cascade,
+    user_id bigint null references users(id) on delete set null,
+    status varchar(40) null,
+    message text not null,
+    created_at timestamp null,
+    updated_at timestamp null
+);
+create index if not exists feedback_updates_feedback_report_id_created_at_index on feedback_updates (feedback_report_id, created_at);
 
 create table if not exists lesson_objectives (
     id bigserial primary key,
@@ -317,11 +377,14 @@ from (
         ('2026_09_21_033315_create_lesson_resources_table'),
         ('2026_09_21_033316_create_lesson_reflections_table'),
         ('2026_09_21_033317_create_competency_mappings_table'),
+        ('2026_09_21_033321_create_notifications_table'),
         ('2026_09_21_100000_add_name_components_to_users_table'),
         ('2026_09_21_100001_add_differentiation_to_lessons_table'),
         ('2026_09_21_110000_add_is_active_to_users_table'),
         ('2026_09_22_120000_add_structured_plan_to_lessons_table'),
-        ('2026_09_22_120100_create_lesson_versions_table')
+        ('2026_09_22_120100_create_lesson_versions_table'),
+        ('2026_09_22_130000_create_feedback_reports_table'),
+        ('2026_09_22_131000_create_lesson_templates_table')
 ) as m(migration)
 where not exists (
     select 1 from migrations existing where existing.migration = m.migration

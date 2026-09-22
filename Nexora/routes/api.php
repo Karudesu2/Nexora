@@ -9,8 +9,10 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\CompetencyController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\LessonPlanningController;
+use App\Http\Controllers\LessonTemplateController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PacingController;
 use App\Http\Controllers\PlanningContextController;
@@ -111,6 +113,21 @@ Route::prefix('v1')->group(function () {
             'updateRole',
         ]);
 
+        Route::get('/admin/feedback', [
+            FeedbackController::class,
+            'adminIndex',
+        ]);
+
+        Route::get('/admin/feedback/{feedback}', [
+            FeedbackController::class,
+            'adminShow',
+        ]);
+
+        Route::patch('/admin/feedback/{feedback}', [
+            FeedbackController::class,
+            'adminUpdate',
+        ]);
+
         Route::post('/admin/school-years', [
             AcademicContextController::class,
             'storeSchoolYear',
@@ -149,6 +166,30 @@ Route::prefix('v1')->group(function () {
             '/calendar',
             CalendarController::class
         );
+
+        /*
+        | System feedback and support
+        */
+
+        Route::get('/feedback', [
+            FeedbackController::class,
+            'index',
+        ]);
+
+        Route::post('/feedback', [
+            FeedbackController::class,
+            'store',
+        ]);
+
+        Route::get('/feedback/{feedback}', [
+            FeedbackController::class,
+            'show',
+        ]);
+
+        Route::get('/feedback/{feedback}/attachment', [
+            FeedbackController::class,
+            'downloadAttachment',
+        ]);
 
         /*
         | Competencies
@@ -192,6 +233,9 @@ Route::prefix('v1')->group(function () {
             '/lessons',
             LessonController::class
         );
+
+        Route::apiResource('/lesson-templates', LessonTemplateController::class)
+            ->except(['show']);
 
         /*
         | Assessments

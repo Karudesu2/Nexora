@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Bold,
   Check,
@@ -39,6 +40,7 @@ interface PlanningContext { school_years: Option[]; terms: Term[]; grades: Optio
 interface Competency { id: number; code: string; description: string; learning_area?: string | null; }
 interface Lesson { id: number; title: string; lesson_date: string; section: string; status: string; school_year_id: number; term_id: number; grade_id: number; subject_id: number; content?: string | null; grade?: Option; subject?: Option; created_at?: string; updated_at?: string; source_file_name?: string | null; }
 interface LessonVersion { id: number; version_number: number; title: string; status: string; created_at: string; user?: { id: number; name: string }; }
+interface LessonTemplate { id: number; title: string; category?: string | null; description?: string | null; structure?: Partial<LessonDraft> | null; is_public: boolean; user?: { id: number; name: string } | null; created_at?: string; }
 
 interface LessonDraft {
   teacherName: string;
@@ -207,25 +209,116 @@ function lessonDocumentHtml(lesson: Lesson) {
 }
 
 function TemplatesPage() {
-  const templates = [
-    ["Daily Lesson Log", "A compact format for regular classroom instruction."],
-    ["4A Lesson Plan", "Activity, Analysis, Abstraction, and Application sequence."],
-    ["Assessment-Focused Plan", "Use when the lesson centers on performance or written evidence."],
-  ];
+  const navigate = useNavigate();
+  const [templates, setTemplates] = useState<LessonTemplate[]>([]);
+  const [form, setForm] = useState({
+    title: "",
+    category: "Daily Lesson Log",
+    description: "",
+    structure: "",
+    isPublic: false,
+  });
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const loadTemplates = async () => {
+    const response = await api.get<ApiResponse<LessonTemplate[]>>("/lesson-templates");
+    setTemplates(response.data.data);
+  };
+
+  useEffect(() => {
+    void loadTemplates()
+      .catch((loadError: unknown) => setError(getApiErrorMessage(loadError, "Templates could not be loaded.")))
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const saveTemplate = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError("");
+    setNotice("");
+    setIsSaving(true);
+
+    try {
+      await api.post("/lesson-templates", {
+        title: form.title,
+        category: form.category,
+        description: form.description,
+        is_public: form.isPublic,
+        structure: {
+          lessonIntroduction: form.structure,
+          learningActivities: form.structure,
+          assessment: "",
+          teacherReflection: "",
+        },
+      });
+      setNotice("Template posted. You can now use it in the Lesson Planner.");
+      setForm({ title: "", category: "Daily Lesson Log", description: "", structure: "", isPublic: false });
+      await loadTemplates();
+    } catch (saveError) {
+      setError(getApiErrorMessage(saveError, "Template could not be posted."));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const applyTemplate = (template: LessonTemplate) => {
+    const templateDraft = {
+      ...emptyDraft,
+      title: template.title,
+      learningActivities: template.structure?.learningActivities || template.description || "",
+      lessonIntroduction: template.structure?.lessonIntroduction || "",
+      assessment: template.structure?.assessment || "",
+      teacherReflection: template.structure?.teacherReflection || "",
+      ...template.structure,
+    };
+
+    localStorage.setItem("nexora_lesson_draft", JSON.stringify(templateDraft));
+    navigate("/lessons");
+  };
+
+  const removeTemplate = async (template: LessonTemplate) => {
+    if (!window.confirm(`Delete template "${template.title}"?`)) return;
+    await api.delete(`/lesson-templates/${template.id}`);
+    await loadTemplates();
+  };
 
   return <div className="mx-auto max-w-6xl space-y-5">
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <p className="text-sm font-semibold text-sky-700 dark:text-sky-300">Templates</p>
       <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">Lesson plan templates</h1>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-400">Choose a familiar structure, then adjust the lesson details for your class.</p>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-400">Templates are reusable lesson structures. Post one when you want to reuse the same format, then apply it to the Lesson Planner and fill in class-specific details.</p>
     </section>
-    <section className="grid gap-4 md:grid-cols-3">
-      {templates.map(([name, description]) => <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" key={name}>
-        <LayoutTemplate className="size-5 text-sky-700 dark:text-sky-300" />
-        <h2 className="mt-4 font-semibold text-slate-950 dark:text-white">{name}</h2>
-        <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{description}</p>
-      </article>)}
-    </section>
+
+    {error ? <p className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">{error}</p> : null}
+    {notice ? <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">{notice}</p> : null}
+
+    <div className="grid gap-5 xl:grid-cols-[380px_minmax(0,1fr)]">
+      <form className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" onSubmit={saveTemplate}>
+        <h2 className="font-semibold text-slate-950 dark:text-white">Post a template</h2>
+        <label className="mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300">Template title<input className={inputClass} onChange={(event) => setForm({ ...form, title: event.target.value })} required value={form.title} /></label>
+        <label className="mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300">Template type<select className={inputClass} onChange={(event) => setForm({ ...form, category: event.target.value })} value={form.category}><option>Daily Lesson Log</option><option>4A Lesson Plan</option><option>Assessment-Focused Plan</option><option>Custom</option></select></label>
+        <label className="mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300">Purpose or notes<textarea className={inputClass} onChange={(event) => setForm({ ...form, description: event.target.value })} rows={3} value={form.description} /></label>
+        <label className="mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300">Reusable structure<textarea className={inputClass} onChange={(event) => setForm({ ...form, structure: event.target.value })} placeholder="Example: Review, motivation, discussion, guided practice, assessment, reflection" required rows={6} value={form.structure} /></label>
+        <label className="mt-4 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300"><input checked={form.isPublic} onChange={(event) => setForm({ ...form, isPublic: event.target.checked })} type="checkbox" /> Share as public template</label>
+        <button className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60 dark:bg-sky-600 dark:hover:bg-sky-500" disabled={isSaving} type="submit">{isSaving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}{isSaving ? "Posting..." : "Post template"}</button>
+      </form>
+
+      <section className="grid gap-4 md:grid-cols-2">
+        {isLoading ? <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500 shadow-sm dark:border-slate-800 dark:bg-slate-900">Loading templates...</div> : templates.map((template) => <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" key={template.id}>
+          <div className="flex items-start justify-between gap-3"><LayoutTemplate className="size-5 text-sky-700 dark:text-sky-300" /><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">{template.is_public ? "Public" : "Mine"}</span></div>
+          <h2 className="mt-4 font-semibold text-slate-950 dark:text-white">{template.title}</h2>
+          <p className="mt-1 text-xs font-medium text-slate-500">{template.category || "Custom template"}</p>
+          <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{template.description || template.structure?.learningActivities || "Reusable lesson structure."}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button className={primaryButton} onClick={() => applyTemplate(template)} type="button"><FilePlus2 className="size-4" /> Use template</button>
+            <button className={secondaryButton} onClick={() => void removeTemplate(template)} type="button"><Trash2 className="size-4" /> Delete</button>
+          </div>
+        </article>)}
+        {!isLoading && templates.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900">No templates yet. Post your first reusable lesson structure.</div> : null}
+      </section>
+    </div>
   </div>;
 }
 
