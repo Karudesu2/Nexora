@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   BarChart3,
   Bell,
+  BellRing,
   BookOpen,
   CalendarDays,
   ClipboardCheck,
@@ -35,6 +36,7 @@ const navigation = [
   { name: "Templates", path: "/templates", icon: LayoutTemplate },
   { name: "Assessments", path: "/assessments", icon: ClipboardCheck },
   { name: "Resources", path: "/resources", icon: LibraryBig },
+  { name: "Announcements", path: "/announcements", icon: BellRing },
   { name: "Feedback", path: "/feedback", icon: MessageSquareText },
   { name: "Standards Alignment", path: "/alignment", icon: Target },
   { name: "Pacing Monitor", path: "/pacing", icon: Gauge },

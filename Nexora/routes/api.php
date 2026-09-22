@@ -18,6 +18,7 @@ use App\Http\Controllers\PacingController;
 use App\Http\Controllers\PlanningContextController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ResourceController;
+use App\Http\Controllers\SystemAnnouncementController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -93,6 +94,11 @@ Route::prefix('v1')->group(function () {
             'index',
         ]);
 
+        Route::get('/announcements', [
+            SystemAnnouncementController::class,
+            'index',
+        ]);
+
         Route::get('/admin/academic-context', [
             AcademicContextController::class,
             'index',
@@ -126,6 +132,26 @@ Route::prefix('v1')->group(function () {
         Route::patch('/admin/feedback/{feedback}', [
             FeedbackController::class,
             'adminUpdate',
+        ]);
+
+        Route::get('/admin/announcements', [
+            SystemAnnouncementController::class,
+            'adminIndex',
+        ]);
+
+        Route::post('/admin/announcements', [
+            SystemAnnouncementController::class,
+            'store',
+        ]);
+
+        Route::patch('/admin/announcements/{announcement}', [
+            SystemAnnouncementController::class,
+            'update',
+        ]);
+
+        Route::delete('/admin/announcements/{announcement}', [
+            SystemAnnouncementController::class,
+            'destroy',
         ]);
 
         Route::post('/admin/school-years', [

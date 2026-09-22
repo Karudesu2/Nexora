@@ -22,6 +22,7 @@ const UserManagementPage = lazy(() => import("./pages/UserManagementPage").then(
 const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage").then(({ AdminDashboardPage: Page }) => ({ default: Page })));
 const FeedbackPage = lazy(() => import("./pages/FeedbackPage").then(({ FeedbackPage: Page }) => ({ default: Page })));
 const AdminFeedbackPage = lazy(() => import("./pages/FeedbackPage").then(({ AdminFeedbackPage: Page }) => ({ default: Page })));
+const AnnouncementsPage = lazy(() => import("./pages/AnnouncementsPage").then(({ AnnouncementsPage: Page }) => ({ default: Page })));
 
 function PageLoader() {
   return <div className="flex min-h-64 items-center justify-center text-sm text-slate-500">Loading page...</div>;
@@ -42,6 +43,7 @@ export default function App() {
           <Route path="/templates" element={<TemplatesPage />} />
           <Route path="/assessments" element={<AssessmentsPage />} />
           <Route path="/resources" element={<ResourcesPage />} />
+          <Route path="/announcements" element={<AnnouncementsPage />} />
           <Route path="/feedback" element={<FeedbackPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/alignment" element={<AlignmentPage />} />

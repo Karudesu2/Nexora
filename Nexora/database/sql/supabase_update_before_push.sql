@@ -88,6 +88,21 @@ create table if not exists notifications (
 );
 create index if not exists notifications_user_id_read_at_index on notifications (user_id, read_at);
 
+create table if not exists system_announcements (
+    id bigserial primary key,
+    created_by bigint null references users(id) on delete set null,
+    title varchar(255) not null,
+    message text not null,
+    type varchar(40) not null default 'Update',
+    priority varchar(40) not null default 'Normal',
+    starts_at timestamp null,
+    ends_at timestamp null,
+    is_active boolean not null default true,
+    created_at timestamp null,
+    updated_at timestamp null
+);
+create index if not exists system_announcements_is_active_starts_at_ends_at_index on system_announcements (is_active, starts_at, ends_at);
+
 create table if not exists school_years (
     id bigserial primary key,
     name varchar(255) not null,
@@ -384,7 +399,8 @@ from (
         ('2026_09_22_120000_add_structured_plan_to_lessons_table'),
         ('2026_09_22_120100_create_lesson_versions_table'),
         ('2026_09_22_130000_create_feedback_reports_table'),
-        ('2026_09_22_131000_create_lesson_templates_table')
+        ('2026_09_22_131000_create_lesson_templates_table'),
+        ('2026_09_22_132000_create_system_announcements_table')
 ) as m(migration)
 where not exists (
     select 1 from migrations existing where existing.migration = m.migration
