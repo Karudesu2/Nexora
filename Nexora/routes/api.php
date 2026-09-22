@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AcademicContextController;
+use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AlignmentController;
 use App\Http\Controllers\AssessmentController;
@@ -68,6 +69,13 @@ Route::prefix('v1')->group(function () {
     */
 
     Route::middleware('auth:sanctum')->group(function () {
+
+        Route::middleware('school-administrator')->prefix('admin')->group(function () {
+            Route::get('/dashboard', [
+                AdminDashboardController::class,
+                'index',
+            ]);
+        });
 
         /*
         | Dashboard

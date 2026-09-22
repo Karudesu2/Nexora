@@ -31,8 +31,11 @@ export function LoginPage() {
         passwordIsEmail: password === email,
       });
 
-      await login(email, password);
-      navigate("/", { replace: true });
+      const authenticatedUser = await login(email, password);
+      navigate(
+        authenticatedUser.role_codes?.includes("administrator") ? "/admin/dashboard" : "/",
+        { replace: true },
+      );
     } catch (submissionError) {
       setError(
         getApiErrorMessage(
@@ -185,4 +188,3 @@ export function LoginPage() {
     </main>
   );
 }
-

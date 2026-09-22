@@ -9,6 +9,7 @@ import { AlignmentPage, AssessmentsPage, LessonsPage, NotificationsPage, Resourc
 import { AdministrationPage } from "./pages/AdministrationPage";
 import { CalendarPage } from "./pages/CalendarPage";
 import { UserManagementPage } from "./pages/UserManagementPage";
+import { AdminDashboardPage } from "./pages/AdminDashboardPage";
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/alignment" element={<AlignmentPage />} />
           <Route path="/administration" element={<AdministrationPage />} />
           <Route path="/administration/users" element={<UserManagementPage />} />
+          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
           <Route path="/pacing" element={<PacingPage />} />
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
