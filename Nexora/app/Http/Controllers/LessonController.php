@@ -5,13 +5,15 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreLessonRequest;
 use App\Models\Lesson;
 use App\Services\LessonService;
+use App\Services\PacingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class LessonController extends ApiController
 {
     public function __construct(
-        private readonly LessonService $lessonService
+        private readonly LessonService $lessonService,
+        private readonly PacingService $pacingService
     ) {}
 
     /**
@@ -51,6 +53,7 @@ class LessonController extends ApiController
             $request->user()->id,
             $request->validated()
         );
+        $this->pacingService->forgetTeacherPacing($lesson->teacher_id);
 
         return $this->success($lesson, 'Lesson created successfully.', 201);
     }
@@ -91,6 +94,7 @@ class LessonController extends ApiController
             $lesson,
             $request->validated()
         );
+        $this->pacingService->forgetTeacherPacing($lesson->teacher_id);
 
         return $this->success($lesson, 'Lesson updated successfully.');
     }
@@ -105,6 +109,7 @@ class LessonController extends ApiController
         $this->authorize('delete', $lesson);
 
         $this->lessonService->delete($lesson);
+        $this->pacingService->forgetTeacherPacing($request->user()->id);
 
         return $this->success(message: 'Lesson deleted successfully.');
     }
