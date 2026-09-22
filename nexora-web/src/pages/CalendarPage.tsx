@@ -15,7 +15,7 @@ const inputClass = "mt-1.5 w-full rounded-xl border border-slate-300 bg-white px
 
 export function CalendarPage() {
   const { user } = useAuth();
-  const canManageCalendar = user?.role_codes?.some((role) => ["administrator", "system_administrator"].includes(role));
+  const canManageCalendar = user?.role_codes?.some((role) => ["school_administrator", "administrator", "system_administrator"].includes(role));
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [context, setContext] = useState<PlanningContext | null>(null);
   const [query, setQuery] = useState("");

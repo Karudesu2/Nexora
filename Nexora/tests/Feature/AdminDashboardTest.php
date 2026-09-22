@@ -26,7 +26,7 @@ class AdminDashboardTest extends TestCase
 
     public function test_school_administrator_can_retrieve_real_dashboard_summary(): void
     {
-        Sanctum::actingAs($this->userWithRole('administrator'));
+        Sanctum::actingAs($this->userWithRole('school_administrator'));
 
         $this->getJson('/api/v1/admin/dashboard')
             ->assertOk()

@@ -146,21 +146,19 @@ class AcademicContextController extends ApiController
 
     private function ensureAdministrator(Request $request): void
     {
-        if (! $request->user()->hasAnyRole([
-            'administrator',
-            'system_administrator',
-        ])) {
+        if (! $request->user()->isSchoolAdministrator()
+            && ! $request->user()->hasAnyRole(['system_administrator'])) {
             throw new AuthorizationException;
         }
     }
 
     private function ensureCurriculumManager(Request $request): void
     {
-        if (! $request->user()->hasAnyRole([
-            'administrator',
-            'system_administrator',
-            'curriculum_coordinator',
-        ])) {
+        if (! $request->user()->isSchoolAdministrator()
+            && ! $request->user()->hasAnyRole([
+                'system_administrator',
+                'curriculum_coordinator',
+            ])) {
             throw new AuthorizationException;
         }
     }

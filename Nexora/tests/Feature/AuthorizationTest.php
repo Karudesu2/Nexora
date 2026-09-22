@@ -110,7 +110,7 @@ class AuthorizationTest extends TestCase
         ])->assertForbidden();
     }
 
-    public function test_only_administrators_can_create_calendar_events(): void
+    public function test_only_school_administrators_can_create_calendar_events(): void
     {
         $teacher = User::factory()->create();
         $administrator = User::factory()->create();
@@ -129,7 +129,7 @@ class AuthorizationTest extends TestCase
 
         $administrator->roles()->attach(Role::create([
             'name' => 'School Administrator',
-            'code' => 'administrator',
+            'code' => 'school_administrator',
         ]));
         Sanctum::actingAs($administrator);
 

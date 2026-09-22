@@ -50,12 +50,13 @@ export default function MainLayout() {
 
   const closeNavigation = () => setIsNavigationOpen(false);
   const canManageAcademicContext = user?.role_codes?.some((role) => [
+    "school_administrator",
     "administrator",
     "system_administrator",
   ].includes(role));
   const primaryRole = user?.role_codes?.includes("system_administrator")
     ? "System Administrator"
-    : user?.role_codes?.includes("administrator")
+    : user?.role_codes?.some((role) => ["school_administrator", "administrator"].includes(role))
       ? "Administrator"
       : user?.role_codes?.includes("curriculum_coordinator")
         ? "Curriculum Coordinator"

@@ -15,7 +15,7 @@ class RoleSeeder extends Seeder
         foreach ([
             ['name' => 'Teacher', 'code' => 'teacher'],
             ['name' => 'Curriculum Coordinator', 'code' => 'curriculum_coordinator'],
-            ['name' => 'School Administrator', 'code' => 'administrator'],
+            ['name' => 'School Administrator', 'code' => 'school_administrator'],
             ['name' => 'System Administrator', 'code' => 'system_administrator'],
         ] as $role) {
             Role::query()->updateOrCreate(['code' => $role['code']], $role);

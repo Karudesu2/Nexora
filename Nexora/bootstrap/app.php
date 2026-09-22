@@ -3,6 +3,7 @@
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -78,5 +79,18 @@ return Application::configure(basePath: dirname(__DIR__))
                 'success' => false,
                 'message' => 'The requested resource was not found.',
             ], 404);
+        });
+
+        $exceptions->render(function (QueryException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            report($exception);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'A server error occurred. Please try again later.',
+            ], 500);
         });
     })->create();

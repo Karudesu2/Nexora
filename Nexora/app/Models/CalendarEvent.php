@@ -25,6 +25,7 @@ class CalendarEvent extends Model
             'start_date' => 'date',
             'end_date' => 'date',
             'is_instructional_day' => 'boolean',
+            'is_approved' => 'boolean',
         ];
     }
 

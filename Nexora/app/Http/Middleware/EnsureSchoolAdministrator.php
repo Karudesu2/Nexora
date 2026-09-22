@@ -10,7 +10,7 @@ class EnsureSchoolAdministrator
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (! $request->user()?->hasAnyRole(['administrator'])) {
+        if (! $request->user()?->isSchoolAdministrator()) {
             abort(403, 'Forbidden.');
         }
 

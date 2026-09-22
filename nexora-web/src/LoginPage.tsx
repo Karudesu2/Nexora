@@ -33,7 +33,7 @@ export function LoginPage() {
 
       const authenticatedUser = await login(email, password);
       navigate(
-        authenticatedUser.role_codes?.includes("administrator") ? "/admin/dashboard" : "/",
+        authenticatedUser.role_codes?.some((role) => ["school_administrator", "administrator"].includes(role)) ? "/admin/dashboard" : "/",
         { replace: true },
       );
     } catch (submissionError) {

@@ -47,4 +47,12 @@ class User extends Authenticatable
             ->whereIn('code', $roleCodes)
             ->exists();
     }
+
+    public function isSchoolAdministrator(): bool
+    {
+        return $this->hasAnyRole([
+            'school_administrator',
+            'administrator',
+        ]);
+    }
 }

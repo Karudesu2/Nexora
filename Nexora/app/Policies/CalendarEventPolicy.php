@@ -28,7 +28,8 @@ class CalendarEventPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasAnyRole(['administrator', 'system_administrator']);
+        return $user->isSchoolAdministrator()
+            || $user->hasAnyRole(['system_administrator']);
     }
 
     /**
@@ -36,7 +37,8 @@ class CalendarEventPolicy
      */
     public function update(User $user, CalendarEvent $calendarEvent): bool
     {
-        return $user->hasAnyRole(['administrator', 'system_administrator']);
+        return $user->isSchoolAdministrator()
+            || $user->hasAnyRole(['system_administrator']);
     }
 
     /**
@@ -44,7 +46,8 @@ class CalendarEventPolicy
      */
     public function delete(User $user, CalendarEvent $calendarEvent): bool
     {
-        return $user->hasAnyRole(['administrator', 'system_administrator']);
+        return $user->isSchoolAdministrator()
+            || $user->hasAnyRole(['system_administrator']);
     }
 
     /**
