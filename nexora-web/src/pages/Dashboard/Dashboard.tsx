@@ -59,6 +59,10 @@ function contextFromLesson(lesson?: Lesson): string {
   return [lesson.grade?.name, lesson.subject?.name, lesson.section].filter(Boolean).join(" · ");
 }
 
+function DashboardSkeleton() {
+  return <div aria-busy="true" aria-label="Loading dashboard" className="mx-auto max-w-[1560px] animate-pulse space-y-5"><section className="px-1 pt-1"><div className="h-4 w-32 rounded bg-slate-200 dark:bg-slate-800" /><div className="mt-3 h-10 w-72 max-w-full rounded bg-slate-200 dark:bg-slate-800" /><div className="mt-3 h-4 w-96 max-w-full rounded bg-slate-200 dark:bg-slate-800" /></section><section className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">{Array.from({ length: 4 }, (_, index) => <div className="h-36 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900" key={index}><div className="h-4 w-24 rounded bg-slate-200 dark:bg-slate-800" /><div className="mt-4 h-9 w-16 rounded bg-slate-200 dark:bg-slate-800" /><div className="mt-5 h-2 w-full rounded bg-slate-100 dark:bg-slate-800" /></div>)}</section><div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]"><div className="h-80 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900" /><div className="h-80 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900" /></div></div>;
+}
+
 function MiniCalendar({ date, events }: { date: string; events: CalendarEvent[] }) {
   const [visibleMonth, setVisibleMonth] = useState(() => new Date(`${date}T00:00:00`));
   const monthStart = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1);
@@ -102,6 +106,8 @@ export default function Dashboard() {
 
     return Math.round((dashboard.stats.completed_lessons / dashboard.stats.total_lessons) * 100);
   }, [dashboard]);
+
+  if (loading) return <DashboardSkeleton />;
 
   if (loading) {
     return <div className="flex min-h-[60vh] items-center justify-center gap-2 text-sm text-slate-500 dark:text-slate-400"><Loader2 className="size-5 animate-spin" /> Loading your teaching overview…</div>;

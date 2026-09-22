@@ -97,34 +97,15 @@ export function AuthProvider({
     email: string,
     password: string,
   ) => {
-   const response =
-  await api.post<AuthenticationResponse>(
-    "/auth/login",
-    {
-      email,
-      password,
-    },
-  );
+    const response = await api.post<AuthenticationResponse>(
+      "/auth/login",
+      { email, password },
+    );
 
-console.log("FULL RESPONSE:", response);
-console.log("RESPONSE DATA:", response.data);
-console.log("DATA.DATA:", response.data.data);
-console.log("TOKEN:", response.data.data?.token);
+    localStorage.setItem(tokenStorageKey, response.data.data.token);
+    setUser(response.data.data.user);
 
-   console.log("TOKEN EXISTS:", response.data.data?.token ? "YES" : "NO");
-
-localStorage.setItem(
-  tokenStorageKey,
-  response.data.data.token,
-);
-
-console.log(
-  "AFTER SAVE:",
-  localStorage.getItem(tokenStorageKey) ? "YES" : "NO",
-
-);
-
-setUser(response.data.data.user);
+    return response.data.data.user;
   };
 
   const register = async (
@@ -143,7 +124,6 @@ setUser(response.data.data.user);
 
     setUser(response.data.data.user);
 
-    return response.data.data.user;
   };
 
   const logout = async () => {

@@ -12,6 +12,10 @@ class NotificationController extends ApiController
     {
         $notifications = Notification::query()
             ->where('user_id', $request->user()->id)
+            ->select([
+                'id', 'title', 'message', 'type', 'read_at', 'created_at',
+                'action_url',
+            ])
             ->latest()
             ->get();
 

@@ -42,6 +42,7 @@ class CompetencyController extends ApiController
                     $request->term_id
                 )
             )
+            ->select(['id', 'code', 'description', 'learning_area'])
             ->orderBy('code')
             ->get();
 

@@ -22,6 +22,7 @@ class DashboardController extends ApiController
 
         $todayLessons = (clone $lessons)
             ->whereDate('lesson_date', $today)
+            ->select(['id', 'grade_id', 'subject_id', 'section', 'title', 'lesson_date', 'status'])
             ->with([
                 'subject:id,name',
                 'grade:id,name',
@@ -31,6 +32,7 @@ class DashboardController extends ApiController
 
         $upcomingLessons = (clone $lessons)
             ->whereDate('lesson_date', '>', $today)
+            ->select(['id', 'grade_id', 'subject_id', 'section', 'title', 'lesson_date', 'status'])
             ->with([
                 'subject:id,name',
                 'grade:id,name',
@@ -39,19 +41,11 @@ class DashboardController extends ApiController
             ->limit(5)
             ->get();
 
-        $totalLessons = (clone $lessons)->count();
-
-        $completedLessons = (clone $lessons)
-            ->where('status', 'Completed')
-            ->count();
-
-        $pendingLessons = (clone $lessons)
-            ->whereIn('status', [
-                'Draft',
-                'Scheduled',
-                'In Progress',
-            ])
-            ->count();
+        $lessonCounts = (clone $lessons)
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw("COUNT(CASE WHEN status = 'Completed' THEN 1 END) as completed")
+            ->selectRaw("COUNT(CASE WHEN status IN ('Draft', 'Scheduled', 'In Progress') THEN 1 END) as pending")
+            ->first();
 
         $competenciesCount = Competency::query()->count();
 
@@ -64,6 +58,7 @@ class DashboardController extends ApiController
 
         $calendarEvents = CalendarEvent::query()
             ->whereDate('start_date', '>=', $today)
+            ->select(['id', 'title', 'type', 'start_date', 'end_date', 'is_instructional_day'])
             ->orderBy('start_date')
             ->limit(5)
             ->get();
@@ -77,9 +72,9 @@ class DashboardController extends ApiController
                 ],
 
                 'stats' => [
-                    'total_lessons' => $totalLessons,
-                    'completed_lessons' => $completedLessons,
-                    'pending_lessons' => $pendingLessons,
+                    'total_lessons' => (int) $lessonCounts->total,
+                    'completed_lessons' => (int) $lessonCounts->completed,
+                    'pending_lessons' => (int) $lessonCounts->pending,
                     'competencies' => $competenciesCount,
                     'assessments' => $assessmentsCount,
                 ],

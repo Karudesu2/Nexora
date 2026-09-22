@@ -21,10 +21,14 @@ class ReportController extends ApiController
     {
         $lessons = Lesson::query()
             ->where('teacher_id', $request->user()->id)
+            ->select([
+                'id', 'term_id', 'grade_id', 'subject_id', 'section', 'title',
+                'lesson_date', 'status',
+            ])
             ->with([
-                'grade',
-                'subject',
-                'term',
+                'grade:id,name',
+                'subject:id,name',
+                'term:id,name',
             ])
             ->orderBy('lesson_date')
             ->get();
@@ -41,16 +45,21 @@ class ReportController extends ApiController
     public function overview(Request $request): JsonResponse
     {
         $teacherId = $request->user()->id;
-        $lessons = Lesson::query()->where('teacher_id', $teacherId)->get();
+        $lessonCounts = Lesson::query()
+            ->where('teacher_id', $teacherId)
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw("COUNT(CASE WHEN status = 'Completed' THEN 1 END) as completed")
+            ->selectRaw("COUNT(CASE WHEN status = 'Scheduled' THEN 1 END) as scheduled")
+            ->first();
         $assessments = Assessment::query()
             ->whereHas('lesson', fn ($query) => $query->where('teacher_id', $teacherId))
             ->count();
 
         return $this->success([
             'lessons' => [
-                'total' => $lessons->count(),
-                'completed' => $lessons->where('status', 'Completed')->count(),
-                'scheduled' => $lessons->where('status', 'Scheduled')->count(),
+                'total' => (int) $lessonCounts->total,
+                'completed' => (int) $lessonCounts->completed,
+                'scheduled' => (int) $lessonCounts->scheduled,
             ],
             'assessments' => $assessments,
             'pacing' => $this->pacingService->getTeacherPacing($teacherId),

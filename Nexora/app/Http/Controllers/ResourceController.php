@@ -18,6 +18,10 @@ class ResourceController extends ApiController
                     ->where('teacher_id', $request->user()->id)
                     ->orWhere('is_public', true);
             })
+            ->select([
+                'id', 'name', 'type', 'description', 'file_path',
+                'external_url', 'is_public',
+            ])
             ->latest()
             ->get();
 

@@ -23,11 +23,16 @@ class LessonController extends ApiController
 
         $lessons = Lesson::query()
             ->where('teacher_id', $request->user()->id)
+            ->select([
+                'id', 'school_year_id', 'term_id', 'grade_id', 'subject_id',
+                'section', 'title', 'lesson_date', 'status', 'content',
+                'differentiation',
+            ])
             ->with([
-                'schoolYear',
-                'term',
-                'grade',
-                'subject',
+                'schoolYear:id,name',
+                'term:id,name',
+                'grade:id,name',
+                'subject:id,name',
             ])
             ->orderByDesc('lesson_date')
             ->get();

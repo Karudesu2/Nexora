@@ -34,6 +34,10 @@ class CalendarController extends ApiController
                     $request->end_date
                 )
             )
+            ->select([
+                'id', 'title', 'type', 'start_date', 'end_date',
+                'description', 'is_instructional_day',
+            ])
             ->orderBy('start_date')
             ->get();
 

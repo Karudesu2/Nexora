@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Role;
 use App\Models\User;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -12,6 +13,13 @@ class UserManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(RoleSeeder::class);
+    }
+
     public function test_teacher_cannot_access_user_management(): void
     {
         Sanctum::actingAs($this->userWithRole('teacher'));
@@ -19,9 +27,9 @@ class UserManagementTest extends TestCase
         $this->getJson('/api/v1/admin/users')->assertForbidden();
     }
 
-    public function test_administrator_can_assign_teacher_and_coordinator_roles(): void
+    public function test_school_administrator_can_assign_teacher_and_coordinator_roles(): void
     {
-        $administrator = $this->userWithRole('administrator');
+        $administrator = $this->userWithRole('school_administrator');
         $teacher = $this->userWithRole('teacher');
 
         Sanctum::actingAs($administrator);
@@ -40,9 +48,9 @@ class UserManagementTest extends TestCase
         ]);
     }
 
-    public function test_administrator_cannot_assign_system_administrator_or_modify_themselves(): void
+    public function test_school_administrator_cannot_assign_system_administrator_or_modify_themselves(): void
     {
-        $administrator = $this->userWithRole('administrator');
+        $administrator = $this->userWithRole('school_administrator');
         $teacher = $this->userWithRole('teacher');
 
         Sanctum::actingAs($administrator);
@@ -64,16 +72,16 @@ class UserManagementTest extends TestCase
         Sanctum::actingAs($systemAdministrator);
 
         $this->patchJson("/api/v1/admin/users/{$teacher->id}/role", [
-            'role_code' => 'administrator',
+            'role_code' => 'school_administrator',
         ])
             ->assertOk()
-            ->assertJsonPath('data.user.role_codes.0', 'administrator');
+            ->assertJsonPath('data.user.role_codes.0', 'school_administrator');
     }
 
     public function test_registration_ignores_role_injection_and_assigns_teacher_role(): void
     {
         $this->role('teacher');
-        $this->role('administrator');
+        $this->role('school_administrator');
 
         $this->postJson('/api/v1/auth/register', [
             'first_name' => 'New',
@@ -81,13 +89,13 @@ class UserManagementTest extends TestCase
             'email' => 'new.teacher@example.test',
             'password' => 'password123',
             'password_confirmation' => 'password123',
-            'role' => 'administrator',
+            'role' => 'school_administrator',
         ])->assertCreated();
 
         $user = User::query()->where('email', 'new.teacher@example.test')->firstOrFail();
 
         $this->assertTrue($user->hasAnyRole(['teacher']));
-        $this->assertFalse($user->hasAnyRole(['administrator']));
+        $this->assertFalse($user->hasAnyRole(['school_administrator']));
     }
 
     private function userWithRole(string $roleCode): User

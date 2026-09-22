@@ -30,7 +30,11 @@ class AssessmentController extends ApiController
                     $request->user()->id
                 )
             )
-            ->with('lesson')
+            ->select([
+                'id', 'lesson_id', 'title', 'type', 'assessment_date',
+                'total_points',
+            ])
+            ->with('lesson:id,title')
             ->orderByDesc('assessment_date')
             ->get();
 
