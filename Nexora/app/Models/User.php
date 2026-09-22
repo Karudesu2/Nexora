@@ -14,9 +14,6 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
-        'first_name',
-        'middle_name',
-        'last_name',
         'email',
         'password',
         'is_active',
@@ -50,9 +47,6 @@ class User extends Authenticatable
 
     public function isSchoolAdministrator(): bool
     {
-        return $this->hasAnyRole([
-            'school_administrator',
-            'administrator',
-        ]);
+        return $this->hasAnyRole(['school_administrator']);
     }
 }

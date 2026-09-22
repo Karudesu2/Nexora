@@ -8,8 +8,7 @@ class UserPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isSchoolAdministrator()
-            || $user->hasAnyRole(['system_administrator']);
+        return $user->hasAnyRole(['system_administrator']);
     }
 
     public function view(User $user, User $managedUser): bool
@@ -28,18 +27,6 @@ class UserPolicy
             return false;
         }
 
-        if ($user->hasAnyRole(['system_administrator'])) {
-            return true;
-        }
-
-        if (! $user->isSchoolAdministrator()) {
-            return false;
-        }
-
-        return ! $managedUser->hasAnyRole([
-            'school_administrator',
-            'administrator',
-            'system_administrator',
-        ]);
+        return $user->hasAnyRole(['system_administrator']);
     }
 }

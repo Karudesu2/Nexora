@@ -110,21 +110,17 @@ class AdminUserController extends ApiController
 
     private function canAssignRole(User $user, Role $role): bool
     {
-        return $user->hasAnyRole(['system_administrator'])
-            || in_array($role->code, ['teacher', 'curriculum_coordinator'], true);
+        return $user->hasAnyRole(['system_administrator']);
     }
 
     /**
-     * @return array{id: int, name: string, first_name: ?string, middle_name: ?string, last_name: ?string, email: string, role_codes: array<int, string>}
+     * @return array{id: int, name: string, email: string, role_codes: array<int, string>}
      */
     private function userPayload(User $user): array
     {
         return [
             'id' => $user->id,
             'name' => $user->name,
-            'first_name' => $user->first_name,
-            'middle_name' => $user->middle_name,
-            'last_name' => $user->last_name,
             'email' => $user->email,
             'role_codes' => $user->roles->pluck('code')->sort()->values()->all(),
         ];

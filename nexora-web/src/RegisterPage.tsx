@@ -24,11 +24,6 @@ export function RegisterPage() {
     event.preventDefault();
     setError("");
 
-    const name = [firstName, middleName, lastName]
-      .map((part) => part.trim())
-      .filter(Boolean)
-      .join(" ");
-
     if (!firstName.trim() || !lastName.trim()) {
       setError("Enter your first and last name.");
       return;
@@ -43,10 +38,10 @@ export function RegisterPage() {
 
     try {
       await register({
-        name,
-        first_name: firstName.trim(),
-        middle_name: middleName.trim() || undefined,
-        last_name: lastName.trim(),
+        name: [firstName, middleName, lastName]
+          .map((part) => part.trim())
+          .filter(Boolean)
+          .join(" "),
         email,
         password,
         password_confirmation: passwordConfirmation,
@@ -77,35 +72,15 @@ export function RegisterPage() {
             <legend className="sr-only">Your name</legend>
             <label className="flex min-w-0 flex-col gap-1.5 text-sm font-medium text-slate-700">
               <span>First name</span>
-              <input
-                autoComplete="given-name"
-                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-600 focus:ring-4 focus:ring-sky-100"
-                onChange={(event) => setFirstName(event.target.value)}
-                required
-                type="text"
-                value={firstName}
-              />
+              <input autoComplete="given-name" className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-600 focus:ring-4 focus:ring-sky-100" onChange={(event) => setFirstName(event.target.value)} required type="text" value={firstName} />
             </label>
             <label className="flex min-w-0 flex-col gap-1.5 text-sm font-medium text-slate-700">
               <span className="flex items-center justify-between gap-2">Middle name <span className="font-normal text-slate-400">Optional</span></span>
-              <input
-                autoComplete="additional-name"
-                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-600 focus:ring-4 focus:ring-sky-100"
-                onChange={(event) => setMiddleName(event.target.value)}
-                type="text"
-                value={middleName}
-              />
+              <input autoComplete="additional-name" className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-600 focus:ring-4 focus:ring-sky-100" onChange={(event) => setMiddleName(event.target.value)} type="text" value={middleName} />
             </label>
             <label className="flex min-w-0 flex-col gap-1.5 text-sm font-medium text-slate-700 sm:col-span-2">
               <span>Last name</span>
-              <input
-                autoComplete="family-name"
-                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-600 focus:ring-4 focus:ring-sky-100"
-                onChange={(event) => setLastName(event.target.value)}
-                required
-                type="text"
-                value={lastName}
-              />
+              <input autoComplete="family-name" className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-600 focus:ring-4 focus:ring-sky-100" onChange={(event) => setLastName(event.target.value)} required type="text" value={lastName} />
             </label>
           </fieldset>
 

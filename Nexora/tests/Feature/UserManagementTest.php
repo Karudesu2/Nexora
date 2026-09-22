@@ -27,7 +27,7 @@ class UserManagementTest extends TestCase
         $this->getJson('/api/v1/admin/users')->assertForbidden();
     }
 
-    public function test_school_administrator_can_assign_teacher_and_coordinator_roles(): void
+    public function test_school_administrator_cannot_modify_another_users_role(): void
     {
         $administrator = $this->userWithRole('school_administrator');
         $teacher = $this->userWithRole('teacher');
@@ -36,16 +36,9 @@ class UserManagementTest extends TestCase
 
         $this->patchJson("/api/v1/admin/users/{$teacher->id}/role", [
             'role_code' => 'curriculum_coordinator',
-        ])
-            ->assertOk()
-            ->assertJsonPath('data.user.role_codes.0', 'curriculum_coordinator');
+        ])->assertForbidden();
 
-        $this->assertTrue($teacher->fresh()->hasAnyRole(['curriculum_coordinator']));
-        $this->assertDatabaseHas('activity_logs', [
-            'user_id' => $administrator->id,
-            'action' => 'user.role_updated',
-            'subject_id' => $teacher->id,
-        ]);
+        $this->assertTrue($teacher->fresh()->hasAnyRole(['teacher']));
     }
 
     public function test_school_administrator_cannot_assign_system_administrator_or_modify_themselves(): void
@@ -84,8 +77,7 @@ class UserManagementTest extends TestCase
         $this->role('school_administrator');
 
         $this->postJson('/api/v1/auth/register', [
-            'first_name' => 'New',
-            'last_name' => 'Teacher',
+            'name' => 'New Teacher',
             'email' => 'new.teacher@example.test',
             'password' => 'password123',
             'password_confirmation' => 'password123',

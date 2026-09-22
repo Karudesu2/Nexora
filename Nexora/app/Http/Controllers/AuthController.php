@@ -94,9 +94,7 @@ class AuthController extends ApiController
     public function updateProfile(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'first_name' => ['required', 'string', 'max:100'],
-            'middle_name' => ['nullable', 'string', 'max:100'],
-            'last_name' => ['required', 'string', 'max:100'],
+            'name' => ['required', 'string', 'max:255'],
             'email' => [
                 'required',
                 'email',
@@ -105,17 +103,8 @@ class AuthController extends ApiController
             ],
         ]);
 
-        $data['first_name'] = Str::squish($data['first_name']);
-        $data['middle_name'] = empty($data['middle_name'])
-            ? null
-            : Str::squish($data['middle_name']);
-        $data['last_name'] = Str::squish($data['last_name']);
+        $data['name'] = Str::squish($data['name']);
         $data['email'] = Str::lower(trim($data['email']));
-        $data['name'] = Str::squish(implode(' ', array_filter([
-            $data['first_name'],
-            $data['middle_name'],
-            $data['last_name'],
-        ])));
 
         $request->user()->update($data);
 
@@ -146,16 +135,13 @@ class AuthController extends ApiController
     }
 
     /**
-     * @return array{id: int, name: string, first_name: ?string, middle_name: ?string, last_name: ?string, email: string, role_codes: array<int, string>}
+     * @return array{id: int, name: string, email: string, role_codes: array<int, string>}
      */
     private function userPayload(User $user): array
     {
         return [
             'id' => $user->id,
             'name' => $user->name,
-            'first_name' => $user->first_name,
-            'middle_name' => $user->middle_name,
-            'last_name' => $user->last_name,
             'email' => $user->email,
             'role_codes' => $user->roles()->pluck('code')->all(),
         ];

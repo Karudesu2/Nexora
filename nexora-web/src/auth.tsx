@@ -16,18 +16,12 @@ const tokenStorageKey = "nexora_token";
 interface AuthUser {
   id: number;
   name: string;
-  first_name?: string | null;
-  middle_name?: string | null;
-  last_name?: string | null;
   role_codes?: string[];
   email: string;
 }
 
 interface RegistrationPayload {
   name: string;
-  first_name: string;
-  middle_name?: string;
-  last_name: string;
   email: string;
   password: string;
   password_confirmation: string;

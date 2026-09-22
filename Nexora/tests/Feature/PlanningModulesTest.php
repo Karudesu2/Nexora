@@ -98,13 +98,13 @@ class PlanningModulesTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_administrator_can_create_academic_context_and_teacher_cannot(): void
+    public function test_school_administrator_can_create_academic_context_and_teacher_cannot(): void
     {
         $teacher = User::factory()->create();
         $administrator = User::factory()->create();
         $administrator->roles()->attach(Role::create([
             'name' => 'School Administrator',
-            'code' => 'administrator',
+            'code' => 'school_administrator',
         ]));
 
         Sanctum::actingAs($teacher);

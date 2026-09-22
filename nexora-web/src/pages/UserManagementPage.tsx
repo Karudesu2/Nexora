@@ -40,7 +40,7 @@ export function UserManagementPage() {
   const [savingUserId, setSavingUserId] = useState<number | null>(null);
 
   const isSystemAdministrator = currentUser?.role_codes?.includes("system_administrator") ?? false;
-  const canManageUsers = isSystemAdministrator || (currentUser?.role_codes?.some((role) => ["school_administrator", "administrator"].includes(role)) ?? false);
+  const canManageUsers = isSystemAdministrator;
 
   const loadUsers = async (searchTerm = "") => {
     const response = await api.get<UsersResponse>("/admin/users", { params: searchTerm ? { search: searchTerm } : undefined });
@@ -84,7 +84,7 @@ export function UserManagementPage() {
     }
   };
 
-  const canEditUser = (managedUser: ManagedUser): boolean => managedUser.id !== currentUser?.id && (isSystemAdministrator || !managedUser.role_codes.some((roleCode) => ["school_administrator", "administrator", "system_administrator"].includes(roleCode)));
+  const canEditUser = (managedUser: ManagedUser): boolean => managedUser.id !== currentUser?.id && isSystemAdministrator;
 
   if (!canManageUsers) return <section className="mx-auto max-w-2xl rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200"><h1 className="text-xl font-semibold">Access denied</h1><p className="mt-2 text-sm">You do not have permission to manage user accounts.</p></section>;
   if (loading && users.length === 0) return <div className="flex min-h-64 items-center justify-center gap-2 text-sm text-slate-500 dark:text-slate-400"><Loader2 className="size-5 animate-spin" /> Loading users...</div>;
