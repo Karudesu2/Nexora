@@ -28,10 +28,9 @@ class AcademicContextSeeder extends Seeder
         Term::updateOrCreate(
             [
                 'school_year_id' => $schoolYear->id,
-                'term_number' => 1,
+                'name' => 'First Term',
             ],
             [
-                'name' => 'First Term',
                 'start_date' => '2026-06-01',
                 'end_date' => '2026-09-30',
                 'is_active' => true,
@@ -41,10 +40,9 @@ class AcademicContextSeeder extends Seeder
         Term::updateOrCreate(
             [
                 'school_year_id' => $schoolYear->id,
-                'term_number' => 2,
+                'name' => 'Second Term',
             ],
             [
-                'name' => 'Second Term',
                 'start_date' => '2026-10-01',
                 'end_date' => '2026-12-31',
                 'is_active' => false,
@@ -54,10 +52,9 @@ class AcademicContextSeeder extends Seeder
         Term::updateOrCreate(
             [
                 'school_year_id' => $schoolYear->id,
-                'term_number' => 3,
+                'name' => 'Third Term',
             ],
             [
-                'name' => 'Third Term',
                 'start_date' => '2027-01-01',
                 'end_date' => '2027-03-31',
                 'is_active' => false,
@@ -69,19 +66,15 @@ class AcademicContextSeeder extends Seeder
         $grades = [
             [
                 'name' => 'Grade 7',
-                'level' => 7,
             ],
             [
                 'name' => 'Grade 8',
-                'level' => 8,
             ],
             [
                 'name' => 'Grade 9',
-                'level' => 9,
             ],
             [
                 'name' => 'Grade 10',
-                'level' => 10,
             ],
         ];
 
@@ -98,22 +91,18 @@ class AcademicContextSeeder extends Seeder
             [
                 'name' => 'Mathematics',
                 'code' => 'MATH',
-                'description' => 'Mathematics subject',
             ],
             [
                 'name' => 'Science',
                 'code' => 'SCI',
-                'description' => 'Science subject',
             ],
             [
                 'name' => 'English',
                 'code' => 'ENG',
-                'description' => 'English subject',
             ],
             [
                 'name' => 'Filipino',
                 'code' => 'FIL',
-                'description' => 'Filipino subject',
             ],
         ];
 

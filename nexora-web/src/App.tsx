@@ -13,7 +13,9 @@ const ReportsPage = lazy(() => import("./pages/ModulePage").then(({ ReportsPage:
 const SettingsPage = lazy(() => import("./pages/ModulePage").then(({ SettingsPage: Page }) => ({ default: Page })));
 const AlignmentPage = lazy(() => import("./pages/TeachingPages").then(({ AlignmentPage: Page }) => ({ default: Page })));
 const AssessmentsPage = lazy(() => import("./pages/TeachingPages").then(({ AssessmentsPage: Page }) => ({ default: Page })));
-const LessonsPage = lazy(() => import("./pages/TeachingPages").then(({ LessonsPage: Page }) => ({ default: Page })));
+const LessonsPage = lazy(() => import("./pages/LessonPlannerPage").then(({ LessonsPage: Page }) => ({ default: Page })));
+const CreateLessonPage = lazy(() => import("./pages/LessonPlannerPage").then(({ CreateLessonPage: Page }) => ({ default: Page })));
+const TemplatesPage = lazy(() => import("./pages/LessonPlannerPage").then(({ TemplatesPage: Page }) => ({ default: Page })));
 const NotificationsPage = lazy(() => import("./pages/TeachingPages").then(({ NotificationsPage: Page }) => ({ default: Page })));
 const ResourcesPage = lazy(() => import("./pages/TeachingPages").then(({ ResourcesPage: Page }) => ({ default: Page })));
 const AdministrationPage = lazy(() => import("./pages/AdministrationPage").then(({ AdministrationPage: Page }) => ({ default: Page })));
@@ -35,6 +37,8 @@ export default function App() {
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/competencies" element={<ModulePage module="competencies" />} />
           <Route path="/lessons" element={<LessonsPage />} />
+          <Route path="/lessons/create" element={<CreateLessonPage />} />
+          <Route path="/templates" element={<TemplatesPage />} />
           <Route path="/assessments" element={<AssessmentsPage />} />
           <Route path="/resources" element={<ResourcesPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />

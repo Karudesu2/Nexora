@@ -71,6 +71,11 @@ class StoreLessonRequest extends FormRequest
                 'nullable',
                 'string',
             ],
+
+            'plan_data' => [
+                'nullable',
+                'array',
+            ],
         ];
     }
 

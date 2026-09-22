@@ -168,15 +168,30 @@ Route::prefix('v1')->group(function () {
         | Lessons
         */
 
-        Route::apiResource(
-            '/lessons',
-            LessonController::class
-        );
+        Route::post('/lessons/import', [
+            LessonController::class,
+            'import',
+        ]);
+
+        Route::get('/lessons/{lesson}/versions', [
+            LessonController::class,
+            'versions',
+        ]);
+
+        Route::post('/lessons/{lesson}/versions/{version}/restore', [
+            LessonController::class,
+            'restoreVersion',
+        ]);
 
         Route::put('/lessons/{lesson}/planning', [
             LessonPlanningController::class,
             'update',
         ]);
+
+        Route::apiResource(
+            '/lessons',
+            LessonController::class
+        );
 
         /*
         | Assessments

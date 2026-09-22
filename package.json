@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "scripts": {
+    "stop-dev": "powershell -ExecutionPolicy Bypass -File scripts/stop-dev.ps1",
+    "dev": "node scripts/dev.mjs",
+    "build:web": "npm.cmd --prefix nexora-web run build",
+    "lint:web": "npm.cmd --prefix nexora-web run lint"
+  }
+}

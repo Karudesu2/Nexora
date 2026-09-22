@@ -18,6 +18,7 @@ class LessonService
             $data['status'] ??= 'Draft';
 
             $lesson = Lesson::create($data);
+            $this->recordVersion($lesson);
 
             if ($lesson->status === 'Scheduled') {
                 Notification::create([
@@ -45,6 +46,7 @@ class LessonService
         return DB::transaction(function () use ($lesson, $data) {
             $wasCompleted = $lesson->status === 'Completed';
             $lesson->update($data);
+            $this->recordVersion($lesson->refresh());
 
             if (! $wasCompleted && $lesson->status === 'Completed') {
                 Notification::create([
@@ -68,5 +70,19 @@ class LessonService
         DB::transaction(function () use ($lesson) {
             $lesson->delete();
         });
+    }
+
+    private function recordVersion(Lesson $lesson): void
+    {
+        $nextVersion = ((int) $lesson->versions()->max('version_number')) + 1;
+
+        $lesson->versions()->create([
+            'user_id' => $lesson->teacher_id,
+            'version_number' => $nextVersion,
+            'title' => $lesson->title,
+            'status' => $lesson->status,
+            'content' => $lesson->content,
+            'plan_data' => $lesson->plan_data,
+        ]);
     }
 }

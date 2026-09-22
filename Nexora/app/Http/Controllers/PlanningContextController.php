@@ -22,23 +22,27 @@ class PlanningContextController extends ApiController
                         ->select(['id', 'name'])
                         ->orderByDesc('is_active')
                         ->orderByDesc('start_date')
-                        ->get(),
+                        ->get()
+                        ->toArray(),
 
                     'terms' => Term::query()
                         ->select(['id', 'school_year_id', 'name'])
                         ->orderByDesc('is_active')
                         ->orderBy('start_date')
-                        ->get(),
+                        ->get()
+                        ->toArray(),
 
                     'grades' => Grade::query()
                         ->select(['id', 'name'])
                         ->orderBy('name')
-                        ->get(),
+                        ->get()
+                        ->toArray(),
 
                     'subjects' => Subject::query()
                         ->select(['id', 'name'])
                         ->orderBy('name')
-                        ->get(),
+                        ->get()
+                        ->toArray(),
                 ];
             }
         );

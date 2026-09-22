@@ -69,3 +69,27 @@ a {
   color: #fff;
   background: #0369a1;
 }
+
+@media print {
+  body {
+    background: #fff;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .print-document,
+  .print-document * {
+    visibility: visible;
+  }
+
+  .print-document {
+    display: block !important;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    min-height: 100%;
+    box-shadow: none;
+  }
+}

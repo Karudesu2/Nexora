@@ -22,12 +22,17 @@ class Lesson extends Model
         'status',
         'content',
         'differentiation',
+        'plan_data',
+        'source_file_name',
+        'source_file_path',
+        'source_file_mime',
     ];
 
     protected function casts(): array
     {
         return [
             'lesson_date' => 'date',
+            'plan_data' => 'array',
         ];
     }
 
@@ -87,5 +92,10 @@ class Lesson extends Model
     public function assessments(): HasMany
     {
         return $this->hasMany(Assessment::class);
+    }
+
+    public function versions(): HasMany
+    {
+        return $this->hasMany(LessonVersion::class);
     }
 }
