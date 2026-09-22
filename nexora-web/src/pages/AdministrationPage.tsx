@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { BookOpen, CalendarDays, GraduationCap, Loader2, Plus, Settings2 } from "lucide-react";
 import api from "../services/api";
 import { getApiErrorMessage } from "../services/getApiErrorMessage";
+import { invalidatePlanningContext } from "../services/planningContext";
 
 interface ApiResponse<T> { data: T; }
 interface Option { id: number; name: string; }
@@ -39,6 +40,7 @@ export function AdministrationPage() {
     setNotice("");
     try {
       await api.post(path, body);
+      invalidatePlanningContext();
       reset();
       await load();
       setNotice("Saved successfully.");

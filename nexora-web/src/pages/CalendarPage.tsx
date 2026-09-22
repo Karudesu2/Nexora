@@ -4,6 +4,7 @@ import { CalendarDays, Loader2, Plus, Search } from "lucide-react";
 import api from "../services/api";
 import { useAuth } from "../auth";
 import { getApiErrorMessage } from "../services/getApiErrorMessage";
+import { getPlanningContext } from "../services/planningContext";
 
 interface ApiResponse<T> { data: T; }
 interface CalendarEvent { id: number; title: string; type: string; start_date: string; end_date?: string | null; description?: string | null; is_instructional_day: boolean; }
@@ -27,11 +28,11 @@ export function CalendarPage() {
 const load = useCallback(async () => {
   const eventRequest = api.get<ApiResponse<CalendarEvent[]>>("/calendar");
   const contextRequest = canManageCalendar
-    ? api.get<ApiResponse<PlanningContext>>("/planning-context")
+    ? getPlanningContext()
     : null;
   const [eventResponse, contextResponse] = await Promise.all([eventRequest, contextRequest]);
   setEvents(eventResponse.data.data);
-  if (contextResponse) setContext(contextResponse.data.data);
+  if (contextResponse) setContext(contextResponse);
 }, [canManageCalendar]);
 
   useEffect(() => { void load().catch((loadError: unknown) => setError(getApiErrorMessage(loadError, "Calendar events could not be loaded."))).finally(() => setIsLoading(false)); }, [load]);

@@ -16,6 +16,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import api from "../services/api";
 import { getApiErrorMessage } from "../services/getApiErrorMessage";
+import { getPlanningContext } from "../services/planningContext";
 
 interface ApiResponse<T> { data: T; }
 interface Option { id: number; name: string; }
@@ -57,11 +58,11 @@ export function LessonsPage() {
   const load = async () => {
     const [lessonResponse, contextResponse, competencyResponse] = await Promise.all([
       api.get<ApiResponse<Lesson[]>>("/lessons"),
-      api.get<ApiResponse<PlanningContext>>("/planning-context"),
+      getPlanningContext(),
       api.get<ApiResponse<Competency[]>>("/competencies"),
     ]);
     setLessons(lessonResponse.data.data);
-    setContext(contextResponse.data.data);
+    setContext(contextResponse);
     setCompetencies(competencyResponse.data.data);
   };
 

@@ -1,19 +1,32 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import { LoginPage } from "./LoginPage";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { RegisterPage } from "./RegisterPage";
-import { ModulePage, PacingPage, ReportsPage, SettingsPage } from "./pages/ModulePage";
-import { AlignmentPage, AssessmentsPage, LessonsPage, NotificationsPage, ResourcesPage } from "./pages/TeachingPages";
-import { AdministrationPage } from "./pages/AdministrationPage";
-import { CalendarPage } from "./pages/CalendarPage";
-import { UserManagementPage } from "./pages/UserManagementPage";
-import { AdminDashboardPage } from "./pages/AdminDashboardPage";
+
+const CalendarPage = lazy(() => import("./pages/CalendarPage").then(({ CalendarPage: Page }) => ({ default: Page })));
+const ModulePage = lazy(() => import("./pages/ModulePage").then(({ ModulePage: Page }) => ({ default: Page })));
+const PacingPage = lazy(() => import("./pages/ModulePage").then(({ PacingPage: Page }) => ({ default: Page })));
+const ReportsPage = lazy(() => import("./pages/ModulePage").then(({ ReportsPage: Page }) => ({ default: Page })));
+const SettingsPage = lazy(() => import("./pages/ModulePage").then(({ SettingsPage: Page }) => ({ default: Page })));
+const AlignmentPage = lazy(() => import("./pages/TeachingPages").then(({ AlignmentPage: Page }) => ({ default: Page })));
+const AssessmentsPage = lazy(() => import("./pages/TeachingPages").then(({ AssessmentsPage: Page }) => ({ default: Page })));
+const LessonsPage = lazy(() => import("./pages/TeachingPages").then(({ LessonsPage: Page }) => ({ default: Page })));
+const NotificationsPage = lazy(() => import("./pages/TeachingPages").then(({ NotificationsPage: Page }) => ({ default: Page })));
+const ResourcesPage = lazy(() => import("./pages/TeachingPages").then(({ ResourcesPage: Page }) => ({ default: Page })));
+const AdministrationPage = lazy(() => import("./pages/AdministrationPage").then(({ AdministrationPage: Page }) => ({ default: Page })));
+const UserManagementPage = lazy(() => import("./pages/UserManagementPage").then(({ UserManagementPage: Page }) => ({ default: Page })));
+const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage").then(({ AdminDashboardPage: Page }) => ({ default: Page })));
+
+function PageLoader() {
+  return <div className="flex min-h-64 items-center justify-center text-sm text-slate-500">Loading page...</div>;
+}
 
 export default function App() {
   return (
-    <Routes>
+    <Suspense fallback={<PageLoader />}><Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route element={<ProtectedRoute />}>
@@ -36,6 +49,6 @@ export default function App() {
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    </Routes></Suspense>
   );
 }
