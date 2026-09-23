@@ -47,8 +47,9 @@ class AuthController extends ApiController
     public function login(LoginRequest $request): JsonResponse
     {
         $credentials = $request->validated();
+        $email = Str::lower(trim($credentials['email']));
 
-        $user = User::where('email', $credentials['email'])->first();
+        $user = User::where('email', $email)->first();
 
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             throw ValidationException::withMessages([
