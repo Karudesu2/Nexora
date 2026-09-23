@@ -9,13 +9,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Assessment extends Model
 {
     protected $fillable = [
+        'id',
         'lesson_id',
-        'teacher_id',
         'title',
+        'type',
         'description',
-        'assessment_type',
         'total_points',
-        'status',
         'assessment_date',
     ];
 
@@ -30,11 +29,6 @@ class Assessment extends Model
     public function lesson(): BelongsTo
     {
         return $this->belongsTo(Lesson::class);
-    }
-
-    public function teacher(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'teacher_id');
     }
 
     public function competencies(): BelongsToMany

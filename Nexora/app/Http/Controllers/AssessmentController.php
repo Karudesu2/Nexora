@@ -15,89 +15,92 @@ class AssessmentController extends ApiController
         private readonly AssessmentService $assessmentService
     ) {}
 
-    /**
-     * Display assessments.
-     */
     public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', Assessment::class);
 
         $assessments = Assessment::query()
-            ->whereHas(
-                'lesson',
-                fn ($query) => $query->where(
-                    'teacher_id',
-                    $request->user()->id
-                )
-            )
+            ->whereHas('lesson', function ($query) use ($request): void {
+                $query->where('teacher_id', $request->user()->id);
+            })
             ->select([
-                'id', 'lesson_id', 'title', 'type', 'assessment_date',
+                'id',
+                'lesson_id',
+                'title',
+                'type',
+                'description',
                 'total_points',
+                'assessment_date',
             ])
             ->with('lesson:id,title')
             ->orderByDesc('assessment_date')
             ->get();
 
-        return $this->success($assessments, 'Assessments retrieved successfully.');
+        return $this->success(
+            $assessments,
+            'Assessments retrieved successfully.'
+        );
     }
 
-    /**
-     * Create assessment.
-     */
-    public function store(
-        StoreAssessmentRequest $request
-    ): JsonResponse {
-        $lesson = Lesson::findOrFail($request->integer('lesson_id'));
 
+    public function store(StoreAssessmentRequest $request): JsonResponse
+    {
+        $lesson = Lesson::findOrFail($request->integer('lesson_id'));
         $this->authorize('update', $lesson);
 
         $assessment = $this->assessmentService->create($request->validated());
 
-        return $this->success($assessment, 'Assessment created successfully.', 201);
+        return $this->success(
+            $assessment,
+            'Assessment created successfully.',
+            201
+        );
     }
 
-    /**
-     * Display assessment.
-     */
+
     public function show(Request $request, Assessment $assessment): JsonResponse
     {
         $this->authorize('view', $assessment);
 
-        $assessment->load([
-            'lesson',
-            'competencies',
-        ]);
-
-        return $this->success($assessment, 'Assessment retrieved successfully.');
+        return $this->success(
+            $assessment->load(['lesson', 'competencies']),
+            'Assessment retrieved successfully.'
+        );
     }
 
-    /**
-     * Update assessment.
-     */
+
     public function update(
-        StoreAssessmentRequest $request,
+        Request $request,
         Assessment $assessment
     ): JsonResponse {
         $this->authorize('update', $assessment);
 
-        $assessment = $this->assessmentService->update(
-            $assessment,
-            $request->validated()
-        );
+        $data = $request->validate([
+            'title' => ['sometimes', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'type' => ['nullable', 'string', 'max:100'],
+            'total_points' => ['nullable', 'numeric', 'min:0'],
+            'assessment_date' => ['nullable', 'date'],
+            'competency_ids' => ['sometimes', 'array', 'max:20'],
+            'competency_ids.*' => ['integer', 'exists:competencies,id'],
+        ]);
 
-        return $this->success($assessment, 'Assessment updated successfully.');
+        $assessment = $this->assessmentService->update($assessment, $data);
+
+        return $this->success(
+            $assessment,
+            'Assessment updated successfully.'
+        );
     }
 
-    /**
-     * Delete assessment.
-     */
-    public function destroy(
-        Request $request,
-        Assessment $assessment
-    ): JsonResponse {
+
+    public function destroy(Request $request, Assessment $assessment): JsonResponse
+    {
         $this->authorize('delete', $assessment);
         $this->assessmentService->delete($assessment);
 
-        return $this->success(message: 'Assessment deleted successfully.');
+        return $this->success(
+            message: 'Assessment deleted successfully.'
+        );
     }
 }

@@ -20,13 +20,12 @@ class ResourceController extends ApiController
             })
             ->select([
                 'id',
+                'teacher_id',
                 'name',
                 'description',
-                'resource_type',
+                'type',
                 'file_path',
-                'file_url',
-                'mime_type',
-                'file_size',
+                'external_url',
                 'is_public',
             ])
             ->latest()
@@ -43,14 +42,14 @@ class ResourceController extends ApiController
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'resource_type' => ['nullable', 'string', 'max:100'],
+            'type' => ['nullable', 'string', 'max:100'],
             'description' => ['nullable', 'string'],
-            'file_url' => ['nullable', 'url', 'max:2048'],
+            'external_url' => ['nullable', 'url', 'max:2048'],
             'file' => ['nullable', 'file', 'max:10240'],
             'is_public' => ['sometimes', 'boolean'],
         ]);
 
-        if (!$request->hasFile('file') && empty($data['file_url'])) {
+        if (! $request->hasFile('file') && empty($data['external_url'])) {
             return $this->error(
                 'Add a file or resource link.',
                 422,
@@ -72,15 +71,7 @@ class ResourceController extends ApiController
                 'local'
             );
 
-            $data['file_url'] = Storage::url(
-                $data['file_path']
-            );
-
-            $data['mime_type'] = $file->getMimeType();
-
-            $data['file_size'] = $file->getSize();
-
-            $data['resource_type'] ??=
+            $data['type'] ??=
                 $file->getClientOriginalExtension();
         }
 
@@ -112,9 +103,9 @@ class ResourceController extends ApiController
 
         $data = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
-            'resource_type' => ['nullable', 'string', 'max:100'],
+            'type' => ['nullable', 'string', 'max:100'],
             'description' => ['nullable', 'string'],
-            'file_url' => ['nullable', 'url', 'max:2048'],
+            'external_url' => ['nullable', 'url', 'max:2048'],
             'is_public' => ['sometimes', 'boolean'],
         ]);
 

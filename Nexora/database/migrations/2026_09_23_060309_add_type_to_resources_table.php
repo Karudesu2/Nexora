@@ -8,15 +8,21 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('resources', function (Blueprint $table) {
-            $table->string('type')->nullable()->after('name');
-        });
+        if (Schema::hasTable('resources')
+            && ! Schema::hasColumn('resources', 'type')) {
+            Schema::table('resources', function (Blueprint $table) {
+                $table->string('type')->nullable();
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('resources', function (Blueprint $table) {
-            $table->dropColumn('type');
-        });
+        if (Schema::hasTable('resources')
+            && Schema::hasColumn('resources', 'type')) {
+            Schema::table('resources', function (Blueprint $table) {
+                $table->dropColumn('type');
+            });
+        }
     }
 };

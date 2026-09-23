@@ -8,14 +8,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Resource extends Model
 {
     protected $fillable = [
+        'id',
         'teacher_id',
         'name',
         'description',
-        'resource_type',
+        'type',
         'file_path',
-        'file_url',
-        'mime_type',
-        'file_size',
+        'external_url',
         'is_public',
     ];
 
@@ -23,7 +22,6 @@ class Resource extends Model
     {
         return [
             'is_public' => 'boolean',
-            'file_size' => 'integer',
         ];
     }
 
@@ -31,4 +29,4 @@ class Resource extends Model
     {
         return $this->belongsTo(User::class, 'teacher_id');
     }
-}app/Http/Controllers/ResourceController.php
+}
