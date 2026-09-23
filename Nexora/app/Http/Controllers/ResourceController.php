@@ -13,7 +13,7 @@ class ResourceController extends ApiController
     public function index(Request $request): JsonResponse
     {
         $resources = Resource::query()
-            ->where(function ($query) use ($request) {
+            ->where(function ($query) use ($request): void {
                 $query
                     ->where('teacher_id', $request->user()->id)
                     ->orWhere('is_public', true);
@@ -21,10 +21,12 @@ class ResourceController extends ApiController
             ->select([
                 'id',
                 'name',
-                'type',
                 'description',
+                'resource_type',
                 'file_path',
-                'external_url',
+                'file_url',
+                'mime_type',
+                'file_size',
                 'is_public',
             ])
             ->latest()
@@ -41,18 +43,22 @@ class ResourceController extends ApiController
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'type' => ['nullable', 'string', 'max:100'],
+            'resource_type' => ['nullable', 'string', 'max:100'],
             'description' => ['nullable', 'string'],
-            'external_url' => ['nullable', 'url', 'max:2048'],
+            'file_url' => ['nullable', 'url', 'max:2048'],
             'file' => ['nullable', 'file', 'max:10240'],
             'is_public' => ['sometimes', 'boolean'],
         ]);
 
-
-        if (!$request->hasFile('file') && empty($data['external_url'])) {
+        if (!$request->hasFile('file') && empty($data['file_url'])) {
             return $this->error(
                 'Add a file or resource link.',
-                422
+                422,
+                [
+                    'file' => [
+                        'Add a file or resource link.'
+                    ]
+                ]
             );
         }
 
@@ -63,10 +69,19 @@ class ResourceController extends ApiController
 
             $data['file_path'] = $file->store(
                 'resources',
-                'public'
+                'local'
             );
 
-            $data['type'] ??= $file->getClientMimeType();
+            $data['file_url'] = Storage::url(
+                $data['file_path']
+            );
+
+            $data['mime_type'] = $file->getMimeType();
+
+            $data['file_size'] = $file->getSize();
+
+            $data['resource_type'] ??=
+                $file->getClientOriginalExtension();
         }
 
 
@@ -86,6 +101,7 @@ class ResourceController extends ApiController
     }
 
 
+
     public function update(
         Request $request,
         Resource $resource
@@ -96,9 +112,9 @@ class ResourceController extends ApiController
 
         $data = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
-            'type' => ['nullable', 'string', 'max:100'],
+            'resource_type' => ['nullable', 'string', 'max:100'],
             'description' => ['nullable', 'string'],
-            'external_url' => ['nullable', 'url', 'max:2048'],
+            'file_url' => ['nullable', 'url', 'max:2048'],
             'is_public' => ['sometimes', 'boolean'],
         ]);
 
@@ -113,6 +129,7 @@ class ResourceController extends ApiController
     }
 
 
+
     public function download(Resource $resource): StreamedResponse
     {
         $this->authorize('view', $resource);
@@ -124,12 +141,17 @@ class ResourceController extends ApiController
         );
 
 
-        return Storage::disk('public')
-            ->download(
-                $resource->file_path,
-                $resource->name
-            );
+        $disk = Storage::disk('local')->exists($resource->file_path)
+            ? Storage::disk('local')
+            : Storage::disk('public');
+
+
+        return $disk->download(
+            $resource->file_path,
+            $resource->name
+        );
     }
+
 
 
     public function destroy(
@@ -141,6 +163,10 @@ class ResourceController extends ApiController
 
 
         if ($resource->file_path) {
+
+            Storage::disk('local')
+                ->delete($resource->file_path);
+
             Storage::disk('public')
                 ->delete($resource->file_path);
         }
