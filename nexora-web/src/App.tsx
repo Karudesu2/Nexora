@@ -14,7 +14,7 @@ const SettingsPage = lazy(() => import("./pages/ModulePage").then(({ SettingsPag
 const AlignmentPage = lazy(() => import("./pages/TeachingPages").then(({ AlignmentPage: Page }) => ({ default: Page })));
 const AssessmentsPage = lazy(() => import("./pages/TeachingPages").then(({ AssessmentsPage: Page }) => ({ default: Page })));
 const LessonsPage = lazy(() => import("./pages/LessonPlannerPage").then(({ LessonsPage: Page }) => ({ default: Page })));
-const TemplatesPage = lazy(() => import("./pages/LessonPlannerPage").then(({ TemplatesPage: Page }) => ({ default: Page })));
+const TemplatesPage = lazy(() => import("./pages/TemplateLibraryPage").then(({ TemplateLibraryPage: Page }) => ({ default: Page })));
 const NotificationsPage = lazy(() => import("./pages/TeachingPages").then(({ NotificationsPage: Page }) => ({ default: Page })));
 const ResourcesPage = lazy(() => import("./pages/TeachingPages").then(({ ResourcesPage: Page }) => ({ default: Page })));
 const AdministrationPage = lazy(() => import("./pages/AdministrationPage").then(({ AdministrationPage: Page }) => ({ default: Page })));

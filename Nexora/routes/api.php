@@ -260,8 +260,10 @@ Route::prefix('v1')->group(function () {
             LessonController::class
         );
 
-        Route::apiResource('/lesson-templates', LessonTemplateController::class)
-            ->except(['show']);
+        Route::post('/lesson-templates/{template}/duplicate', [LessonTemplateController::class, 'duplicate']);
+        Route::get('/lesson-templates/{template}/download', [LessonTemplateController::class, 'download']);
+        Route::get('/lesson-templates/{template}/preview', [LessonTemplateController::class, 'preview']);
+        Route::apiResource('/lesson-templates', LessonTemplateController::class);
 
         /*
         | Assessments

@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { ArrowRight, Check, GraduationCap } from "lucide-react";
 import { useAuth } from "./auth";
 import { getApiErrorMessage } from "./services/getApiErrorMessage";
+import { hasExpiredSession } from "./services/authToken";
 
 export function LoginPage() {
   const { user, login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,12 +27,6 @@ export function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      console.log("LOGIN FORM:", {
-        email,
-        passwordLength: password.length,
-        passwordIsEmail: password === email,
-      });
-
       const authenticatedUser = await login(email, password);
       navigate(
         authenticatedUser.role_codes?.some((role) => ["school_administrator", "administrator"].includes(role)) ? "/admin/dashboard" : "/",
@@ -151,9 +147,9 @@ export function LoginPage() {
                 />
               </label>
 
-              {error ? (
+              {error || location.state?.reason === "session-expired" || hasExpiredSession() ? (
                 <p className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-sm text-red-700">
-                  {error}
+                  {error || "Your session has expired. Please sign in again."}
                 </p>
               ) : null}
 

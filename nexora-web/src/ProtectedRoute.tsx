@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "./auth";
+import { hasExpiredSession } from "./services/authToken";
 
 export function ProtectedRoute() {
   const { user, isLoading } = useAuth();
@@ -14,7 +15,7 @@ export function ProtectedRoute() {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    return <Navigate to="/login" replace state={{ from: location, reason: hasExpiredSession() ? "session-expired" : undefined }} />;
   }
 
   return <Outlet />;

@@ -48,6 +48,23 @@ class AuthorizationTest extends TestCase
             ->assertJsonPath('data.user.id', $user->id);
     }
 
+    public function test_login_token_authenticates_the_primary_teacher_api_modules(): void
+    {
+        $user = User::factory()->create(['email' => 'teacher@example.test']);
+
+        $token = $this->postJson('/api/v1/auth/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ])->assertOk()->json('data.token');
+
+        foreach (['/api/v1/lesson-templates', '/api/v1/announcements', '/api/v1/feedback', '/api/v1/resources', '/api/v1/lessons'] as $uri) {
+            $this->withToken($token)
+                ->getJson($uri)
+                ->assertOk()
+                ->assertJsonPath('success', true);
+        }
+    }
+
     public function test_seeded_teacher_can_log_in_with_the_documented_credentials(): void
     {
         $this->seed();

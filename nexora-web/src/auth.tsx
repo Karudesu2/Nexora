@@ -10,8 +10,8 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 import api from "./services/api";
-
-const tokenStorageKey = "nexora_token";
+import { clearAuthToken, getAuthToken, saveAuthToken } from "./services/authToken";
+import { sessionExpiredEvent } from "./services/api";
 
 interface AuthUser {
   id: number;
@@ -67,7 +67,7 @@ export function AuthProvider({
 
   useEffect(() => {
     const restoreSession = async () => {
-      const token = localStorage.getItem(tokenStorageKey);
+      const token = getAuthToken();
 
       if (!token) {
         setIsLoading(false);
@@ -77,7 +77,7 @@ export function AuthProvider({
       try {
         await refreshUser();
       } catch {
-        localStorage.removeItem(tokenStorageKey);
+        clearAuthToken();
         setUser(null);
       } finally {
         setIsLoading(false);
@@ -86,6 +86,17 @@ export function AuthProvider({
 
     void restoreSession();
   }, [refreshUser]);
+
+  useEffect(() => {
+    const expireSession = () => {
+      clearAuthToken();
+      setUser(null);
+    };
+
+    window.addEventListener(sessionExpiredEvent, expireSession);
+
+    return () => window.removeEventListener(sessionExpiredEvent, expireSession);
+  }, []);
 
   const login = async (
     email: string,
@@ -96,7 +107,7 @@ export function AuthProvider({
       { email, password },
     );
 
-    localStorage.setItem(tokenStorageKey, response.data.data.token);
+    saveAuthToken(response.data.data.token);
     setUser(response.data.data.user);
 
     return response.data.data.user;
@@ -111,10 +122,7 @@ export function AuthProvider({
         payload,
       );
 
-    localStorage.setItem(
-      tokenStorageKey,
-      response.data.data.token,
-    );
+    saveAuthToken(response.data.data.token);
 
     setUser(response.data.data.user);
 
@@ -124,7 +132,7 @@ export function AuthProvider({
     try {
       await api.post("/auth/logout");
     } finally {
-      localStorage.removeItem(tokenStorageKey);
+      clearAuthToken();
       setUser(null);
     }
   };

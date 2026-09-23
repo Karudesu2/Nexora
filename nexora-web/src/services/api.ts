@@ -1,4 +1,7 @@
 import axios from "axios";
+import { clearAuthToken, getAuthToken, markSessionExpired } from "./authToken";
+
+export const sessionExpiredEvent = "nexora:session-expired";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api/v1",
@@ -9,7 +12,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("nexora_token");
+  const token = getAuthToken();
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -21,8 +24,14 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("nexora_token");
+    const isAuthenticationRequest = ["/auth/login", "/auth/register"].some(
+      (path) => error.config?.url?.endsWith(path),
+    );
+
+    if (error.response?.status === 401 && !isAuthenticationRequest) {
+      clearAuthToken();
+      markSessionExpired();
+      window.dispatchEvent(new Event(sessionExpiredEvent));
     }
 
     return Promise.reject(error);

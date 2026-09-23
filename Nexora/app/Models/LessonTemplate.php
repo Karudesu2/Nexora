@@ -14,6 +14,15 @@ class LessonTemplate extends Model
         'description',
         'structure',
         'is_public',
+        'subject',
+        'grade_level',
+        'learning_area',
+        'file_name',
+        'file_path',
+        'preview_path',
+        'file_mime',
+        'file_size',
+        'processing_status',
     ];
 
     protected function casts(): array

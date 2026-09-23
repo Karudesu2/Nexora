@@ -20,5 +20,7 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => false,
+    // Bearer-token clients do not require cookies, but this supports Sanctum's
+    // first-party SPA mode without opening protected routes.
+    'supports_credentials' => true,
 ];
