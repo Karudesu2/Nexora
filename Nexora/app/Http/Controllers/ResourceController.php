@@ -13,20 +13,29 @@ class ResourceController extends ApiController
     public function index(Request $request): JsonResponse
     {
         $resources = Resource::query()
-            ->where(function ($query) use ($request): void {
+            ->where(function ($query) use ($request) {
                 $query
                     ->where('teacher_id', $request->user()->id)
                     ->orWhere('is_public', true);
             })
             ->select([
-                'id', 'name', 'type', 'description', 'file_path',
-                'external_url', 'is_public',
+                'id',
+                'name',
+                'type',
+                'description',
+                'file_path',
+                'external_url',
+                'is_public',
             ])
             ->latest()
             ->get();
 
-        return $this->success($resources, 'Resources retrieved successfully.');
+        return $this->success(
+            $resources,
+            'Resources retrieved successfully.'
+        );
     }
+
 
     public function store(Request $request): JsonResponse
     {
@@ -39,31 +48,51 @@ class ResourceController extends ApiController
             'is_public' => ['sometimes', 'boolean'],
         ]);
 
-        if (! $request->hasFile('file') && empty($data['external_url'])) {
+
+        if (!$request->hasFile('file') && empty($data['external_url'])) {
             return $this->error(
-                'Add a file or a resource link.',
-                422,
-                ['file' => ['Add a file or a resource link.']]
+                'Add a file or resource link.',
+                422
             );
         }
 
+
         if ($request->hasFile('file')) {
+
             $file = $request->file('file');
-            $data['file_path'] = $file->store('resources', 'local');
+
+            $data['file_path'] = $file->store(
+                'resources',
+                'public'
+            );
+
             $data['type'] ??= $file->getClientMimeType();
         }
 
+
         unset($data['file']);
+
         $data['teacher_id'] = $request->user()->id;
+
 
         $resource = Resource::create($data);
 
-        return $this->success($resource, 'Resource created successfully.', 201);
+
+        return $this->success(
+            $resource,
+            'Resource created successfully.',
+            201
+        );
     }
 
-    public function update(Request $request, Resource $resource): JsonResponse
-    {
+
+    public function update(
+        Request $request,
+        Resource $resource
+    ): JsonResponse {
+
         $this->authorize('update', $resource);
+
 
         $data = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
@@ -73,38 +102,55 @@ class ResourceController extends ApiController
             'is_public' => ['sometimes', 'boolean'],
         ]);
 
+
         $resource->update($data);
 
-        return $this->success($resource->refresh(), 'Resource updated successfully.');
+
+        return $this->success(
+            $resource->refresh(),
+            'Resource updated successfully.'
+        );
     }
 
-    /**
-     * Download a resource file after applying the owner/public visibility rule.
-     */
+
     public function download(Resource $resource): StreamedResponse
     {
         $this->authorize('view', $resource);
 
-        abort_unless($resource->file_path, 404);
 
-        $disk = Storage::disk('local')->exists($resource->file_path)
-            ? Storage::disk('local')
-            : Storage::disk('public');
+        abort_unless(
+            $resource->file_path,
+            404
+        );
 
-        return $disk->download($resource->file_path, $resource->name);
+
+        return Storage::disk('public')
+            ->download(
+                $resource->file_path,
+                $resource->name
+            );
     }
 
-    public function destroy(Request $request, Resource $resource): JsonResponse
-    {
+
+    public function destroy(
+        Request $request,
+        Resource $resource
+    ): JsonResponse {
+
         $this->authorize('delete', $resource);
 
+
         if ($resource->file_path) {
-            Storage::disk('local')->delete($resource->file_path);
-            Storage::disk('public')->delete($resource->file_path);
+            Storage::disk('public')
+                ->delete($resource->file_path);
         }
+
 
         $resource->delete();
 
-        return $this->success(message: 'Resource deleted successfully.');
+
+        return $this->success(
+            message: 'Resource deleted successfully.'
+        );
     }
 }
