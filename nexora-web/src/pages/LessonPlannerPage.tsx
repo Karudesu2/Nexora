@@ -290,44 +290,57 @@ function TemplatesPage() {
 
   const removeTemplate = async (template: LessonTemplate) => {
     if (!window.confirm(`Delete template "${template.title}"?`)) return;
-    await api.delete(`/lesson-templates/${template.id}`);
-    await loadTemplates();
+    setError("");
+    try {
+      await api.delete(`/lesson-templates/${template.id}`);
+      setNotice("Template deleted.");
+      await loadTemplates();
+    } catch (deleteError) {
+      setError(getApiErrorMessage(deleteError, "The template could not be deleted."));
+    }
   };
 
-  return <div className="mx-auto max-w-6xl space-y-5">
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <p className="text-sm font-semibold text-sky-700 dark:text-sky-300">Templates</p>
-      <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">Lesson plan templates</h1>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-400">Templates are reusable lesson structures. Post one when you want to reuse the same format, then apply it to the Lesson Planner and fill in class-specific details.</p>
+  return <div className="mx-auto w-full max-w-[1600px] space-y-5">
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="border-b border-slate-100 bg-gradient-to-br from-sky-50 via-white to-indigo-50 px-5 py-6 dark:border-slate-800 dark:from-sky-500/10 dark:via-slate-900 dark:to-indigo-500/10 sm:px-7 sm:py-7">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div><p className="text-sm font-semibold text-sky-700 dark:text-sky-300">Template library</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white sm:text-3xl">Build lessons from a strong start</h1>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-400">Save your best lesson structures once, then apply them in the planner whenever you need a reliable starting point.</p></div>
+          <div className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-sky-200 bg-white/80 px-3 py-2 text-sm font-semibold text-sky-800 shadow-sm dark:border-sky-900 dark:bg-slate-950/70 dark:text-sky-200"><LayoutTemplate className="size-4" /> {templates.length} saved</div>
+        </div>
+      </div>
     </section>
 
     {error ? <p className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">{error}</p> : null}
     {notice ? <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">{notice}</p> : null}
 
-    <div className="grid gap-5 xl:grid-cols-[380px_minmax(0,1fr)]">
-      <form className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" onSubmit={saveTemplate}>
-        <h2 className="font-semibold text-slate-950 dark:text-white">Post a template</h2>
-        <label className="mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300">Template title<input className={inputClass} onChange={(event) => setForm({ ...form, title: event.target.value })} required value={form.title} /></label>
-        <label className="mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300">Template type<select className={inputClass} onChange={(event) => setForm({ ...form, category: event.target.value })} value={form.category}><option>Daily Lesson Log</option><option>4A Lesson Plan</option><option>Assessment-Focused Plan</option><option>Custom</option></select></label>
-        <label className="mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300">Purpose or notes<textarea className={inputClass} onChange={(event) => setForm({ ...form, description: event.target.value })} rows={3} value={form.description} /></label>
-        <label className="mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300">Reusable structure<textarea className={inputClass} onChange={(event) => setForm({ ...form, structure: event.target.value })} placeholder="Example: Review, motivation, discussion, guided practice, assessment, reflection" required rows={6} value={form.structure} /></label>
-        <label className="mt-4 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300"><input checked={form.isPublic} onChange={(event) => setForm({ ...form, isPublic: event.target.checked })} type="checkbox" /> Share as public template</label>
-        <button className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60 dark:bg-sky-600 dark:hover:bg-sky-500" disabled={isSaving} type="submit">{isSaving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}{isSaving ? "Posting..." : "Post template"}</button>
+    <div className="grid items-start gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
+      <form className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 xl:sticky xl:top-28" onSubmit={saveTemplate}>
+        <div className="flex items-start gap-3"><div className="grid size-10 shrink-0 place-items-center rounded-xl bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300"><LayoutTemplate className="size-5" /></div><div><h2 className="font-semibold text-slate-950 dark:text-white">Create a template</h2><p className="mt-1 text-sm leading-5 text-slate-500 dark:text-slate-400">Keep the reusable flow here; add class-specific details in the planner.</p></div></div>
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Template title<input className={inputClass} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="e.g. Inquiry-based science" required value={form.title} /></label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Template type<select className={inputClass} onChange={(event) => setForm({ ...form, category: event.target.value })} value={form.category}><option>Daily Lesson Log</option><option>4A Lesson Plan</option><option>Assessment-Focused Plan</option><option>Custom</option></select></label>
+        </div>
+        <label className="mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300">Purpose or notes<textarea className={`${inputClass} min-h-28 resize-y leading-6`} onChange={(event) => setForm({ ...form, description: event.target.value })} placeholder="When and why this template works well" rows={3} value={form.description} /></label>
+        <label className="mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300">Reusable lesson flow<textarea className={`${inputClass} min-h-48 resize-y leading-6`} onChange={(event) => setForm({ ...form, structure: event.target.value })} placeholder="Example: Review, motivation, discussion, guided practice, assessment, reflection" required rows={6} value={form.structure} /></label>
+        <label className="mt-4 flex items-start gap-2 rounded-xl bg-slate-50 p-3 text-sm text-slate-700 dark:bg-slate-950 dark:text-slate-300"><input checked={form.isPublic} className="mt-0.5" onChange={(event) => setForm({ ...form, isPublic: event.target.checked })} type="checkbox" /><span><span className="font-medium">Share with other teachers</span><span className="mt-0.5 block text-xs text-slate-500">Public templates can be reused by your school.</span></span></label>
+        <button className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60 dark:bg-sky-600 dark:hover:bg-sky-500" disabled={isSaving} type="submit">{isSaving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}{isSaving ? "Saving template..." : "Save template"}</button>
       </form>
 
-      <section className="grid gap-4 md:grid-cols-2">
-        {isLoading ? <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500 shadow-sm dark:border-slate-800 dark:bg-slate-900">Loading templates...</div> : templates.map((template) => <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" key={template.id}>
-          <div className="flex items-start justify-between gap-3"><LayoutTemplate className="size-5 text-sky-700 dark:text-sky-300" /><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">{template.is_public ? "Public" : "Mine"}</span></div>
-          <h2 className="mt-4 font-semibold text-slate-950 dark:text-white">{template.title}</h2>
-          <p className="mt-1 text-xs font-medium text-slate-500">{template.category || "Custom template"}</p>
-          <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{template.description || template.structure?.learningActivities || "Reusable lesson structure."}</p>
-          <div className="mt-4 flex flex-wrap gap-2">
+      <section className="min-w-0"><div className="mb-4 flex items-end justify-between gap-4"><div><h2 className="font-semibold text-slate-950 dark:text-white">Your template collection</h2><p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Choose one to open a prepared lesson draft.</p></div><span className="hidden text-sm text-slate-500 sm:block">{isLoading ? "Loading..." : `${templates.length} available`}</span></div>
+      <div className="grid gap-4 md:grid-cols-2">
+        {isLoading ? <div className="md:col-span-2 rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 shadow-sm dark:border-slate-800 dark:bg-slate-900"><Loader2 className="mx-auto mb-3 size-5 animate-spin text-sky-600" />Loading templates...</div> : templates.map((template) => <article className="group flex min-h-64 flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-sky-900" key={template.id}>
+          <div className="flex items-start justify-between gap-3"><div className="grid size-10 place-items-center rounded-xl bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300"><LayoutTemplate className="size-5" /></div><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${template.is_public ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>{template.is_public ? "Shared" : "Personal"}</span></div>
+          <p className="mt-5 text-xs font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">{template.category || "Custom template"}</p><h3 className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{template.title}</h3>
+          <p className="mt-3 line-clamp-4 text-sm leading-6 text-slate-600 dark:text-slate-400">{template.description || template.structure?.learningActivities || "Reusable lesson structure."}</p>
+          <div className="mt-auto flex flex-wrap gap-2 pt-5">
             <button className={primaryButton} onClick={() => applyTemplate(template)} type="button"><FilePlus2 className="size-4" /> Use template</button>
             <button className={secondaryButton} onClick={() => void removeTemplate(template)} type="button"><Trash2 className="size-4" /> Delete</button>
           </div>
         </article>)}
-        {!isLoading && templates.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900">No templates yet. Post your first reusable lesson structure.</div> : null}
-      </section>
+        {!isLoading && templates.length === 0 ? <div className="md:col-span-2 rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900"><LayoutTemplate className="mx-auto mb-3 size-6 text-sky-600" />No templates yet. Create your first reusable lesson structure.</div> : null}
+      </div></section>
     </div>
   </div>;
 }
