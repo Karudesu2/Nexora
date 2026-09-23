@@ -71,6 +71,10 @@ a {
 }
 
 @media print {
+  @page {
+    margin: 18mm;
+  }
+
   body {
     background: #fff;
   }
@@ -90,6 +94,7 @@ a {
     inset: 0;
     width: 100%;
     min-height: 100%;
+    padding: 0 !important;
     box-shadow: none;
   }
 }

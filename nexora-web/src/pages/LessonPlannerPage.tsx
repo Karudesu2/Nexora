@@ -154,6 +154,15 @@ const steps = [
   { title: "Reflection", fields: ["Gains", "Reflection", "Challenges", "AI disclosure"] },
 ];
 
+const stepDescriptions = [
+  "Set the teaching context and the essential details for this lesson.",
+  "Capture what learners already know and the support they need.",
+  "Connect the lesson to curriculum expectations and a practical pace.",
+  "List the materials and tools needed before class begins.",
+  "Write the learning sequence, practice, and assessment plan.",
+  "Record outcomes, next steps, and any AI assistance used.",
+];
+
 function formatDate(value?: string) {
   if (!value) return "No date";
   return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(new Date(`${value}T00:00:00`));
@@ -618,23 +627,23 @@ function LessonPlanner({ startCreating = false }: { startCreating?: boolean }) {
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className="h-full rounded-full bg-sky-600" style={{ width: `${progress}%` }} /></div>
       </div>
     </div>
-    <div className="grid gap-0 lg:grid-cols-[280px_minmax(0,1fr)]">
-      <nav className="border-b border-slate-100 p-4 dark:border-slate-800 lg:border-b-0 lg:border-r">
-        <div className="space-y-1">
+    <div className="grid gap-0 xl:grid-cols-[230px_minmax(0,1fr)]">
+      <nav className="border-b border-slate-100 p-3 dark:border-slate-800 xl:border-b-0 xl:border-r">
+        <div className="grid gap-1 sm:grid-cols-2 xl:grid-cols-1">
           {steps.map((step, index) => <button className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition ${activeStep === index ? "bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300" : "text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800"}`} key={step.title} onClick={() => { setActiveStep(index); setExpandedStep(index); }} type="button">
             <span className={`grid size-7 place-items-center rounded-full text-xs font-semibold ${activeStep === index ? "bg-sky-600 text-white" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>{index + 1}</span>
             <span>{step.title}</span>
           </button>)}
         </div>
       </nav>
-      <div className="p-5">
-        <div className="space-y-3">
-          {steps.map((step, index) => <section className="rounded-xl border border-slate-200 dark:border-slate-800" key={step.title}>
-            <button className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left" onClick={() => { setExpandedStep(expandedStep === index ? -1 : index); setActiveStep(index); }} type="button">
-              <span><span className="font-semibold text-slate-950 dark:text-white">{step.title}</span><span className="ml-2 text-xs text-slate-500">{step.fields.join(", ")}</span></span>
+      <div className="min-w-0 p-4 sm:p-6">
+        <div className="space-y-4">
+          {steps.map((step, index) => <section className="overflow-hidden rounded-xl bg-slate-50/70 ring-1 ring-slate-200 dark:bg-slate-950/30 dark:ring-slate-800" key={step.title}>
+            <button className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left sm:px-5" onClick={() => { setExpandedStep(expandedStep === index ? -1 : index); setActiveStep(index); }} type="button">
+              <span><span className="block font-semibold text-slate-950 dark:text-white">{step.title}</span><span className="mt-1 block text-xs font-normal leading-5 text-slate-500 dark:text-slate-400">{stepDescriptions[index]}</span></span>
               <ChevronDown className={`size-4 text-slate-500 transition ${expandedStep === index ? "rotate-180" : ""}`} />
             </button>
-            {expandedStep === index ? <div className="border-t border-slate-100 p-4 dark:border-slate-800">{renderStep(index)}</div> : null}
+            {expandedStep === index ? <div className="border-t border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 sm:p-5">{renderStep(index)}</div> : null}
           </section>)}
         </div>
         <div className="mt-5 flex flex-wrap justify-between gap-2">
@@ -648,7 +657,7 @@ function LessonPlanner({ startCreating = false }: { startCreating?: boolean }) {
   function renderStep(index: number) {
     switch (index) {
       case 0:
-        return <div className="grid gap-4 sm:grid-cols-2">
+        return <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Teacher Name<input className={inputClass} onChange={(event) => setField("teacherName", event.target.value)} value={draft.teacherName} /></label>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Subject<select className={inputClass} onChange={(event) => setField("subjectId", event.target.value)} required value={draft.subjectId}><option value="">Select subject</option>{context?.subjects.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}</select></label>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Grade Level<select className={inputClass} onChange={(event) => setField("gradeId", event.target.value)} required value={draft.gradeId}><option value="">Select grade</option>{context?.grades.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}</select></label>
@@ -658,22 +667,22 @@ function LessonPlanner({ startCreating = false }: { startCreating?: boolean }) {
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Date<input className={inputClass} onChange={(event) => setField("date", event.target.value)} required type="date" value={draft.date} /></label>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Section<input className={inputClass} onChange={(event) => setField("section", event.target.value)} placeholder="Example: Rizal" value={draft.section} /></label>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Learning Area<input className={inputClass} onChange={(event) => setField("learningArea", event.target.value)} value={draft.learningArea} /></label>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 sm:col-span-2">Lesson Title<input className={inputClass} onChange={(event) => setField("title", event.target.value)} required value={draft.title} /></label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 md:col-span-2 xl:col-span-3">Lesson Title<input className={inputClass} onChange={(event) => setField("title", event.target.value)} required value={draft.title} /></label>
         </div>;
       case 1:
-        return <div className="grid gap-4"><SmartTextarea label="Learner Profile" value={draft.learnerProfile} onChange={(value) => setField("learnerProfile", value)} /><SmartTextarea label="Learner Background" value={draft.learnerBackground} onChange={(value) => setField("learnerBackground", value)} /><SmartTextarea label="Prior Knowledge" value={draft.priorKnowledge} onChange={(value) => setField("priorKnowledge", value)} /><SmartTextarea label="Learning Needs" value={draft.learningNeeds} onChange={(value) => setField("learningNeeds", value)} /><SmartTextarea label="Classroom Considerations" value={draft.classroomConsiderations} onChange={(value) => setField("classroomConsiderations", value)} /></div>;
+        return <div className="grid gap-5 xl:grid-cols-2"><SmartTextarea label="Learner Profile" value={draft.learnerProfile} onChange={(value) => setField("learnerProfile", value)} /><SmartTextarea label="Learner Background" value={draft.learnerBackground} onChange={(value) => setField("learnerBackground", value)} /><SmartTextarea label="Prior Knowledge" value={draft.priorKnowledge} onChange={(value) => setField("priorKnowledge", value)} /><SmartTextarea label="Learning Needs" value={draft.learningNeeds} onChange={(value) => setField("learningNeeds", value)} /><div className="xl:col-span-2"><SmartTextarea label="Classroom Considerations" value={draft.classroomConsiderations} onChange={(value) => setField("classroomConsiderations", value)} /></div></div>;
       case 2:
-        return <div className="grid gap-4"><label className="text-sm font-medium text-slate-700 dark:text-slate-300">Learning Competency<select className={inputClass} onChange={(event) => setField("competencyId", event.target.value)} value={draft.competencyId}><option value="">Add later</option>{competencies.map((competency) => <option key={competency.id} value={competency.id}>{competency.code} - {competency.description}</option>)}</select></label><SmartTextarea label="Learning Competencies" value={draft.learningCompetencies} onChange={(value) => setField("learningCompetencies", value)} /><SmartTextarea label="Learning Objectives" value={draft.objectives} onChange={(value) => setField("objectives", value)} /><SmartTextarea label="Content Standards" value={draft.contentStandards} onChange={(value) => setField("contentStandards", value)} /><SmartTextarea label="Performance Standards" value={draft.performanceStandards} onChange={(value) => setField("performanceStandards", value)} /><SmartTextarea label="Target Skills" value={draft.targetSkills} onChange={(value) => setField("targetSkills", value)} /><div className="grid gap-4 sm:grid-cols-2"><label className="text-sm font-medium text-slate-700 dark:text-slate-300">Lesson Duration<input className={inputClass} onChange={(event) => setField("lessonDuration", event.target.value)} value={draft.lessonDuration} /></label><label className="text-sm font-medium text-slate-700 dark:text-slate-300">Lesson Schedule<input className={inputClass} onChange={(event) => setField("lessonSchedule", event.target.value)} value={draft.lessonSchedule} /></label></div><SmartTextarea label="Pacing" value={draft.pacing} onChange={(value) => setField("pacing", value)} /></div>;
+        return <div className="grid gap-5 xl:grid-cols-2"><label className="xl:col-span-2 text-sm font-medium text-slate-700 dark:text-slate-300">Learning Competency<select className={inputClass} onChange={(event) => setField("competencyId", event.target.value)} value={draft.competencyId}><option value="">Add later</option>{competencies.map((competency) => <option key={competency.id} value={competency.id}>{competency.code} - {competency.description}</option>)}</select></label><SmartTextarea label="Learning Competencies" value={draft.learningCompetencies} onChange={(value) => setField("learningCompetencies", value)} /><SmartTextarea label="Learning Objectives" value={draft.objectives} onChange={(value) => setField("objectives", value)} /><SmartTextarea label="Content Standards" value={draft.contentStandards} onChange={(value) => setField("contentStandards", value)} /><SmartTextarea label="Performance Standards" value={draft.performanceStandards} onChange={(value) => setField("performanceStandards", value)} /><SmartTextarea label="Target Skills" value={draft.targetSkills} onChange={(value) => setField("targetSkills", value)} /><div className="grid gap-4 sm:grid-cols-2"><label className="text-sm font-medium text-slate-700 dark:text-slate-300">Lesson Duration<input className={inputClass} onChange={(event) => setField("lessonDuration", event.target.value)} value={draft.lessonDuration} /></label><label className="text-sm font-medium text-slate-700 dark:text-slate-300">Lesson Schedule<input className={inputClass} onChange={(event) => setField("lessonSchedule", event.target.value)} value={draft.lessonSchedule} /></label></div><div className="xl:col-span-2"><SmartTextarea label="Pacing" value={draft.pacing} onChange={(value) => setField("pacing", value)} /></div></div>;
       case 3:
-        return <div className="grid gap-4"><SmartTextarea label="Learning Materials" value={draft.materials} onChange={(value) => setField("materials", value)} /><SmartTextarea label="References" value={draft.references} onChange={(value) => setField("references", value)} /><SmartTextarea label="Digital Resources" value={draft.digitalResources} onChange={(value) => setField("digitalResources", value)} /><SmartTextarea label="Classroom Equipment" value={draft.classroomEquipment} onChange={(value) => setField("classroomEquipment", value)} /><SmartTextarea label="Additional Resources" value={draft.additionalResources} onChange={(value) => setField("additionalResources", value)} /></div>;
+        return <div className="grid gap-5 xl:grid-cols-2"><SmartTextarea label="Learning Materials" value={draft.materials} onChange={(value) => setField("materials", value)} /><SmartTextarea label="References" value={draft.references} onChange={(value) => setField("references", value)} /><SmartTextarea label="Digital Resources" value={draft.digitalResources} onChange={(value) => setField("digitalResources", value)} /><SmartTextarea label="Classroom Equipment" value={draft.classroomEquipment} onChange={(value) => setField("classroomEquipment", value)} /><div className="xl:col-span-2"><SmartTextarea label="Additional Resources" value={draft.additionalResources} onChange={(value) => setField("additionalResources", value)} /></div></div>;
       case 4:
-        return <div className="grid gap-4"><SmartTextarea label="Motivation Activity" value={draft.motivationActivity} onChange={(value) => setField("motivationActivity", value)} /><SmartTextarea label="Review Activity" value={draft.reviewActivity} onChange={(value) => setField("reviewActivity", value)} /><SmartTextarea label="Lesson Introduction" value={draft.lessonIntroduction} onChange={(value) => setField("lessonIntroduction", value)} /><SmartTextarea label="Lesson Presentation" value={draft.lessonPresentation} onChange={(value) => setField("lessonPresentation", value)} /><SmartTextarea label="Learning Activities" value={draft.learningActivities} onChange={(value) => setField("learningActivities", value)} /><SmartTextarea label="Guided Practice" value={draft.guidedPractice} onChange={(value) => setField("guidedPractice", value)} /><SmartTextarea label="Independent Practice" value={draft.independentPractice} onChange={(value) => setField("independentPractice", value)} /><SmartTextarea label="Assessment" value={draft.assessment} onChange={(value) => setField("assessment", value)} /><SmartTextarea label="Assignment / Extension Activity" value={draft.assignment} onChange={(value) => setField("assignment", value)} /></div>;
+        return <div className="grid gap-5 xl:grid-cols-2"><SmartTextarea label="Motivation Activity" value={draft.motivationActivity} onChange={(value) => setField("motivationActivity", value)} /><SmartTextarea label="Review Activity" value={draft.reviewActivity} onChange={(value) => setField("reviewActivity", value)} /><SmartTextarea label="Lesson Introduction" value={draft.lessonIntroduction} onChange={(value) => setField("lessonIntroduction", value)} /><SmartTextarea label="Lesson Presentation" value={draft.lessonPresentation} onChange={(value) => setField("lessonPresentation", value)} /><div className="xl:col-span-2"><SmartTextarea label="Learning Activities" value={draft.learningActivities} onChange={(value) => setField("learningActivities", value)} /></div><SmartTextarea label="Guided Practice" value={draft.guidedPractice} onChange={(value) => setField("guidedPractice", value)} /><SmartTextarea label="Independent Practice" value={draft.independentPractice} onChange={(value) => setField("independentPractice", value)} /><SmartTextarea label="Assessment" value={draft.assessment} onChange={(value) => setField("assessment", value)} /><SmartTextarea label="Assignment / Extension Activity" value={draft.assignment} onChange={(value) => setField("assignment", value)} /></div>;
       default:
         return <div className="grid gap-4"><SmartTextarea label="Learner Gains" value={draft.learnerGains} onChange={(value) => setField("learnerGains", value)} /><SmartTextarea label="Teaching Reflection" value={draft.teacherReflection} onChange={(value) => setField("teacherReflection", value)} /><SmartTextarea label="Challenges" value={draft.challenges} onChange={(value) => setField("challenges", value)} /><SmartTextarea label="Improvements" value={draft.improvements} onChange={(value) => setField("improvements", value)} /><label className="text-sm font-medium text-slate-700 dark:text-slate-300">AI Used<select className={inputClass} onChange={(event) => setField("aiUsed", event.target.value)} value={draft.aiUsed}><option>No</option><option>Yes</option></select></label><SmartTextarea label="AI Tools Used" value={draft.aiToolsUsed} onChange={(value) => setField("aiToolsUsed", value)} /><SmartTextarea label="AI Contribution" value={draft.aiContribution} onChange={(value) => setField("aiContribution", value)} /></div>;
     }
   }
 
-  return <div className="mx-auto max-w-7xl space-y-5">
+  return <div className="mx-auto w-full max-w-[1600px] space-y-5">
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
@@ -753,7 +762,7 @@ function SmartTextarea({ label, value, onChange }: { label: string; value: strin
       <button className="ml-auto rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white" onClick={() => document.execCommand("undo")} title="Undo" type="button"><Undo2 className="size-4" /></button>
       <button className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white" onClick={() => document.execCommand("redo")} title="Redo" type="button"><Redo2 className="size-4" /></button>
     </div>
-    <textarea className="min-h-32 w-full resize-none bg-transparent px-3 py-2.5 text-sm text-slate-900 outline-none dark:text-white" onChange={(event) => { onChange(event.target.value); event.currentTarget.style.height = "auto"; event.currentTarget.style.height = `${event.currentTarget.scrollHeight}px`; }} rows={4} value={value} />
+    <textarea className="min-h-48 w-full resize-y bg-transparent px-4 py-3 text-sm leading-6 text-slate-900 outline-none dark:text-white" onChange={(event) => { onChange(event.target.value); event.currentTarget.style.height = "auto"; event.currentTarget.style.height = `${Math.max(event.currentTarget.scrollHeight, 192)}px`; }} rows={7} value={value} />
   </div>;
 
   return <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
