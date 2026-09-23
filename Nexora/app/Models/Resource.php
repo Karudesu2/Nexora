@@ -10,10 +10,12 @@ class Resource extends Model
     protected $fillable = [
         'teacher_id',
         'name',
-        'type',
         'description',
+        'resource_type',
         'file_path',
-        'external_url',
+        'file_url',
+        'mime_type',
+        'file_size',
         'is_public',
     ];
 
@@ -21,6 +23,7 @@ class Resource extends Model
     {
         return [
             'is_public' => 'boolean',
+            'file_size' => 'integer',
         ];
     }
 
@@ -28,4 +31,4 @@ class Resource extends Model
     {
         return $this->belongsTo(User::class, 'teacher_id');
     }
-}
+}app/Http/Controllers/ResourceController.php
