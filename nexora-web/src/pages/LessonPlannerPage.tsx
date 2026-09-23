@@ -39,6 +39,7 @@ interface Term extends Option { school_year_id: number; }
 interface PlanningContext { school_years: Option[]; terms: Term[]; grades: Option[]; subjects: Option[]; }
 interface Competency { id: number; code: string; description: string; learning_area?: string | null; }
 interface Lesson { id: number; title: string; lesson_date: string; section: string; status: string; school_year_id: number; term_id: number; grade_id: number; subject_id: number; content?: string | null; grade?: Option; subject?: Option; created_at?: string; updated_at?: string; source_file_name?: string | null; }
+interface LessonDetail extends Lesson { plan_data?: Partial<LessonDraft> | null; }
 interface LessonVersion { id: number; version_number: number; title: string; status: string; created_at: string; user?: { id: number; name: string }; }
 interface LessonTemplate { id: number; title: string; category?: string | null; description?: string | null; structure?: Partial<LessonDraft> | null; is_public: boolean; user?: { id: number; name: string } | null; created_at?: string; }
 
@@ -334,6 +335,7 @@ function LessonPlanner({ startCreating = false }: { startCreating?: boolean }) {
   const [expandedStep, setExpandedStep] = useState(0);
   const [query, setQuery] = useState("");
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+  const [editingLessonId, setEditingLessonId] = useState<number | null>(null);
   const [versions, setVersions] = useState<LessonVersion[]>([]);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -377,7 +379,7 @@ function LessonPlanner({ startCreating = false }: { startCreating?: boolean }) {
     setNotice("");
     setIsSaving(true);
     try {
-      const lessonResponse = await api.post<ApiResponse<Lesson>>("/lessons", {
+      const payload = {
         school_year_id: Number(draft.schoolYearId),
         term_id: Number(draft.termId),
         grade_id: Number(draft.gradeId),
@@ -388,7 +390,10 @@ function LessonPlanner({ startCreating = false }: { startCreating?: boolean }) {
         content: makeContent(draft, selectedCompetency),
         plan_data: draft,
         status,
-      });
+      };
+      const lessonResponse = editingLessonId
+        ? await api.put<ApiResponse<Lesson>>(`/lessons/${editingLessonId}`, payload)
+        : await api.post<ApiResponse<Lesson>>("/lessons", payload);
 
       await api.put(`/lessons/${lessonResponse.data.data.id}/planning`, {
         objectives: draft.objectives.split("\n").map((objective) => objective.trim()).filter(Boolean),
@@ -421,9 +426,10 @@ function LessonPlanner({ startCreating = false }: { startCreating?: boolean }) {
 
       localStorage.removeItem("nexora_lesson_draft");
       setDraft(emptyDraft);
+      setEditingLessonId(null);
       setActiveStep(0);
       setExpandedStep(0);
-      setNotice(status === "Completed" ? "Lesson plan completed." : "Draft saved.");
+      setNotice(editingLessonId ? "Lesson plan updated." : status === "Completed" ? "Lesson plan completed." : "Draft saved.");
       await load();
     } catch (submissionError) {
       setError(getApiErrorMessage(submissionError, "The lesson plan could not be saved."));
@@ -480,14 +486,19 @@ function LessonPlanner({ startCreating = false }: { startCreating?: boolean }) {
 
   const restoreVersion = async (versionId: number) => {
     if (!selectedLesson) return;
-
-    await api.post(`/lessons/${selectedLesson.id}/versions/${versionId}/restore`);
-    setNotice("Version restored.");
-    setSelectedLesson(null);
-    await load();
+    if (!window.confirm("Restore this version? Your current lesson content will be replaced.")) return;
+    setError("");
+    try {
+      await api.post(`/lessons/${selectedLesson.id}/versions/${versionId}/restore`);
+      setNotice("Version restored.");
+      setSelectedLesson(null);
+      await load();
+    } catch (restoreError) {
+      setError(getApiErrorMessage(restoreError, "The version could not be restored."));
+    }
   };
 
-  const duplicateLesson = (lesson: Lesson) => {
+  const copyLessonToPlanner = (lesson: Lesson) => {
     setDraft({
       ...emptyDraft,
       schoolYearId: String(lesson.school_year_id),
@@ -505,10 +516,43 @@ function LessonPlanner({ startCreating = false }: { startCreating?: boolean }) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const editLesson = async (lesson: Lesson) => {
+    setError("");
+    try {
+      const response = await api.get<ApiResponse<LessonDetail>>(`/lessons/${lesson.id}`);
+      const detail = response.data.data;
+      setDraft({
+        ...emptyDraft,
+        ...detail.plan_data,
+        schoolYearId: String(detail.school_year_id),
+        termId: String(detail.term_id),
+        gradeId: String(detail.grade_id),
+        subjectId: String(detail.subject_id),
+        section: detail.section,
+        date: detail.lesson_date,
+        title: detail.title,
+      });
+      setEditingLessonId(detail.id);
+      setActiveStep(0);
+      setExpandedStep(0);
+      setNotice(`Editing “${detail.title}”. Save to update the existing lesson.`);
+      document.getElementById("lesson-planner-form")?.scrollIntoView({ behavior: "smooth" });
+    } catch (editError) {
+      setError(getApiErrorMessage(editError, "The lesson could not be opened for editing."));
+    }
+  };
+
   const removeLesson = async (lessonId: number) => {
     if (!window.confirm("Delete this lesson plan?")) return;
-    await api.delete(`/lessons/${lessonId}`);
-    await load();
+    setError("");
+    try {
+      await api.delete(`/lessons/${lessonId}`);
+      if (editingLessonId === lessonId) setEditingLessonId(null);
+      setNotice("Lesson plan deleted.");
+      await load();
+    } catch (deleteError) {
+      setError(getApiErrorMessage(deleteError, "The lesson plan could not be deleted."));
+    }
   };
 
   const printLesson = (lesson: Lesson) => {
@@ -542,11 +586,11 @@ function LessonPlanner({ startCreating = false }: { startCreating?: boolean }) {
             <td className="whitespace-nowrap px-4 py-4">
               <div className="flex items-center gap-1">
                 <button className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:hover:bg-slate-800 dark:hover:text-white" onClick={() => void openLesson(lesson)} title="View" type="button"><Eye className="size-4" /></button>
-                <button className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:hover:bg-slate-800 dark:hover:text-white" onClick={() => duplicateLesson(lesson)} title="Edit" type="button"><Edit3 className="size-4" /></button>
-                <button className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:hover:bg-slate-800 dark:hover:text-white" onClick={() => duplicateLesson(lesson)} title="Duplicate" type="button"><Copy className="size-4" /></button>
+                <button className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:hover:bg-slate-800 dark:hover:text-white" onClick={() => void editLesson(lesson)} title="Edit" type="button"><Edit3 className="size-4" /></button>
+                <button className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:hover:bg-slate-800 dark:hover:text-white" onClick={() => copyLessonToPlanner(lesson)} title="Duplicate" type="button"><Copy className="size-4" /></button>
                 <button className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:hover:bg-slate-800 dark:hover:text-white" onClick={() => printLesson(lesson)} title="Print" type="button"><Printer className="size-4" /></button>
-                <button className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:hover:bg-slate-800 dark:hover:text-white" onClick={() => printLesson(lesson)} title="Download PDF" type="button"><Download className="size-4" /></button>
-                <button className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:hover:bg-slate-800 dark:hover:text-white" onClick={() => downloadText(`${lesson.title}.docx`, lessonDocumentHtml(lesson), "application/vnd.openxmlformats-officedocument.wordprocessingml.document")} title="Download DOCX" type="button"><FileText className="size-4" /></button>
+                <button className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:hover:bg-slate-800 dark:hover:text-white" onClick={() => printLesson(lesson)} title="Print or save as PDF" type="button"><Download className="size-4" /></button>
+                <button className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:hover:bg-slate-800 dark:hover:text-white" onClick={() => downloadText(`${lesson.title}.doc`, lessonDocumentHtml(lesson), "application/msword")} title="Download Word document" type="button"><FileText className="size-4" /></button>
                 <button className="rounded-lg p-2 text-slate-500 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/40 dark:hover:text-red-300" onClick={() => void removeLesson(lesson.id)} title="Delete" type="button"><Trash2 className="size-4" /></button>
               </div>
             </td>
@@ -562,7 +606,7 @@ function LessonPlanner({ startCreating = false }: { startCreating?: boolean }) {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Create lesson plan</h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Draft is saved automatically while you type.</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{editingLessonId ? "You are editing an existing lesson. Saving updates that lesson." : "Draft is saved automatically in this browser while you type."}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button className={secondaryButton} onClick={() => void saveLesson("Draft")} disabled={isSaving || !draft.title || !draft.date || !draft.schoolYearId || !draft.termId || !draft.gradeId || !draft.subjectId} type="button"><Save className="size-4" /> Save Draft</button>
@@ -677,7 +721,7 @@ function LessonPlanner({ startCreating = false }: { startCreating?: boolean }) {
             {versions.length === 0 ? <p className="text-sm text-slate-500 dark:text-slate-400">No saved versions yet.</p> : null}
           </div>
         </section>
-        <div className="mt-5 flex flex-wrap gap-2"><button className={secondaryButton} onClick={() => printLesson(selectedLesson)} type="button"><Printer className="size-4" /> Print</button><button className={secondaryButton} onClick={() => downloadText(`${selectedLesson.title}.docx`, lessonDocumentHtml(selectedLesson), "application/vnd.openxmlformats-officedocument.wordprocessingml.document")} type="button"><FileText className="size-4" /> DOCX</button></div>
+        <div className="mt-5 flex flex-wrap gap-2"><button className={secondaryButton} onClick={() => printLesson(selectedLesson)} type="button"><Printer className="size-4" /> Print / save PDF</button><button className={secondaryButton} onClick={() => downloadText(`${selectedLesson.title}.doc`, lessonDocumentHtml(selectedLesson), "application/msword")} type="button"><FileText className="size-4" /> Word</button></div>
       </section>
       <PrintableLesson lesson={selectedLesson} />
     </div> : null}

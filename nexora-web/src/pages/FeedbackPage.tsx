@@ -164,6 +164,10 @@ export function FeedbackPage() {
     event.preventDefault();
     setError("");
     setNotice("");
+    if (form.attachment && form.attachment.size > 10 * 1024 * 1024) {
+      setError("Attachments must be 10 MB or smaller.");
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -188,8 +192,11 @@ export function FeedbackPage() {
     try {
       const response = await api.get(`/feedback/${report.id}/attachment`, { responseType: "blob" });
       const url = URL.createObjectURL(response.data as Blob);
-      window.open(url, "_blank", "noopener,noreferrer");
-      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = report.attachment_name ?? `feedback-${report.id}-attachment`;
+      anchor.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
     } catch (downloadError) {
       setError(getApiErrorMessage(downloadError, "Attachment could not be opened."));
     }
@@ -219,7 +226,7 @@ export function FeedbackPage() {
             <label className="mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300">Description<textarea className={inputClass} onChange={(event) => setForm({ ...form, description: event.target.value })} required rows={5} value={form.description} /></label>
             {form.category === "Bug Report" ? <><label className="mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300">Page or module affected<input className={inputClass} onChange={(event) => setForm({ ...form, affected_module: event.target.value })} value={form.affected_module} /></label><label className="mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300">Steps to reproduce<textarea className={inputClass} onChange={(event) => setForm({ ...form, steps_to_reproduce: event.target.value })} rows={4} value={form.steps_to_reproduce} /></label></> : null}
             <label className="mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300">Suggested solution <span className="font-normal text-slate-400">(optional)</span><textarea className={inputClass} onChange={(event) => setForm({ ...form, suggested_solution: event.target.value })} rows={3} value={form.suggested_solution} /></label>
-            <label className="mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300">Attachment <span className="font-normal text-slate-400">(optional)</span><input className={inputClass} onChange={(event) => setForm({ ...form, attachment: event.target.files?.[0] ?? null })} type="file" /></label>
+            <label className="mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300">Attachment <span className="font-normal text-slate-400">(optional; JPG, PNG, WebP, PDF, TXT, DOC, or DOCX; max 10 MB)</span><input accept=".jpg,.jpeg,.png,.webp,.pdf,.txt,.doc,.docx" className={inputClass} onChange={(event) => setForm({ ...form, attachment: event.target.files?.[0] ?? null })} type="file" /></label>
             <button className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60 dark:bg-sky-600 dark:hover:bg-sky-500" disabled={isSubmitting} type="submit">{isSubmitting ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}{isSubmitting ? "Submitting..." : "Submit feedback"}</button>
           </form>
 
@@ -293,8 +300,11 @@ export function AdminFeedbackPage() {
     try {
       const response = await api.get(`/feedback/${report.id}/attachment`, { responseType: "blob" });
       const url = URL.createObjectURL(response.data as Blob);
-      window.open(url, "_blank", "noopener,noreferrer");
-      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = report.attachment_name ?? `feedback-${report.id}-attachment`;
+      anchor.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
     } catch (downloadError) {
       setError(getApiErrorMessage(downloadError, "Attachment could not be opened."));
     }
