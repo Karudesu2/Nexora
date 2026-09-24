@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Bold,
-  Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -37,7 +36,7 @@ interface ApiResponse<T> { data: T; }
 interface Option { id: number; name: string; }
 interface Term extends Option { school_year_id: number; }
 interface PlanningContext { school_years: Option[]; terms: Term[]; grades: Option[]; subjects: Option[]; }
-interface Competency { id: number; code: string; description: string; learning_area?: string | null; }
+interface Competency { id: number; code: string; description: string; grade_id: number; subject_id: number; term_id: number; learning_area?: string | null; }
 interface Lesson { id: number; title: string; lesson_date: string; section: string; status: string; school_year_id: number; term_id: number; grade_id: number; subject_id: number; content?: string | null; grade?: Option; subject?: Option; created_at?: string; updated_at?: string; source_file_name?: string | null; }
 interface LessonDetail extends Lesson { plan_data?: Partial<LessonDraft> | null; }
 interface LessonVersion { id: number; version_number: number; title: string; status: string; created_at: string; user?: { id: number; name: string }; }
@@ -141,7 +140,7 @@ const emptyDraft: LessonDraft = {
   aiContribution: "",
 };
 
-const inputClass = "mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:ring-sky-950";
+const inputClass = "mt-1.5 h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:ring-sky-950";
 const secondaryButton = "inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800";
 const primaryButton = "inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-sky-600 dark:hover:bg-sky-500";
 
@@ -365,6 +364,8 @@ function LessonPlanner({ startCreating = false }: { startCreating?: boolean }) {
   const [notice, setNotice] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [savePhase, setSavePhase] = useState<"" | "Validating lesson…" | "Saving lesson…" | "Saving lesson details…">("");
+  const [isDirty, setIsDirty] = useState(false);
 
   const load = async () => {
     const [lessonResponse, contextResponse, competencyResponse] = await Promise.all([
@@ -387,20 +388,53 @@ function LessonPlanner({ startCreating = false }: { startCreating?: boolean }) {
     localStorage.setItem("nexora_lesson_draft", JSON.stringify(draft));
   }, [draft]);
 
+  useEffect(() => {
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
+      if (!isDirty || isSaving) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
+  }, [isDirty, isSaving]);
+
   const filteredLessons = useMemo(() => lessons.filter((lesson) => `${lesson.title} ${lesson.subject?.name || ""} ${lesson.grade?.name || ""} ${lesson.status}`.toLowerCase().includes(query.toLowerCase())), [lessons, query]);
   const terms = context?.terms.filter((term) => !draft.schoolYearId || term.school_year_id === Number(draft.schoolYearId)) ?? [];
   const selectedCompetency = competencies.find((competency) => competency.id === Number(draft.competencyId));
   const progress = Math.round(((activeStep + 1) / steps.length) * 100);
 
   const setField = (field: keyof LessonDraft, value: string) => {
+    setIsDirty(true);
     setDraft((current) => ({ ...current, [field]: value }));
   };
 
-  const saveLesson = async (status: "Draft" | "Completed") => {
+  const saveLesson = async () => {
     setError("");
     setNotice("");
+    setSavePhase("Validating lesson…");
+
+    if (!draft.title.trim() || !draft.date || !draft.schoolYearId || !draft.termId || !draft.gradeId || !draft.subjectId) {
+      setSavePhase("");
+      setError("Add a title, date, school year, quarter, grade level, and subject before saving.");
+      return;
+    }
+
+    if (draft.competencyId && !selectedCompetency) {
+      setSavePhase("");
+      setError("Choose a valid learning competency or remove the selection before saving.");
+      return;
+    }
+
+    if (selectedCompetency && (Number(draft.gradeId) !== selectedCompetency.grade_id || Number(draft.subjectId) !== selectedCompetency.subject_id || Number(draft.termId) !== selectedCompetency.term_id)) {
+      setSavePhase("");
+      setError("The selected competency must match the lesson grade, subject, and quarter.");
+      return;
+    }
+
     setIsSaving(true);
     try {
+      setSavePhase("Saving lesson…");
       const payload = {
         school_year_id: Number(draft.schoolYearId),
         term_id: Number(draft.termId),
@@ -411,52 +445,66 @@ function LessonPlanner({ startCreating = false }: { startCreating?: boolean }) {
         lesson_date: draft.date,
         content: makeContent(draft, selectedCompetency),
         plan_data: draft,
-        status,
+        status: "Draft",
       };
-      const lessonResponse = editingLessonId
-        ? await api.put<ApiResponse<Lesson>>(`/lessons/${editingLessonId}`, payload)
-        : await api.post<ApiResponse<Lesson>>("/lessons", payload);
+      let lessonResponse: { data: ApiResponse<Lesson> };
 
-      await api.put(`/lessons/${lessonResponse.data.data.id}/planning`, {
-        objectives: draft.objectives.split("\n").map((objective) => objective.trim()).filter(Boolean),
-        activities: [
-          draft.motivationActivity,
-          draft.reviewActivity,
-          draft.lessonIntroduction,
-          draft.lessonPresentation,
-          draft.learningActivities,
-          draft.guidedPractice,
-          draft.independentPractice,
-          draft.assessment,
-          draft.assignment,
-        ].filter(Boolean).map((title) => ({ title })),
-        resources: [
-          draft.materials,
-          draft.references,
-          draft.digitalResources,
-          draft.classroomEquipment,
-          draft.additionalResources,
-        ].filter(Boolean).map((name) => ({ name, type: "Lesson resource" })),
-        competency_ids: draft.competencyId ? [Number(draft.competencyId)] : [],
-        reflection: {
-          student_learning: draft.learnerGains,
-          teacher_notes: draft.teacherReflection,
-          challenges: draft.challenges,
-          next_steps: draft.improvements,
-        },
-      });
+      try {
+        lessonResponse = editingLessonId
+          ? await api.put<ApiResponse<Lesson>>(`/lessons/${editingLessonId}`, payload)
+          : await api.post<ApiResponse<Lesson>>("/lessons", payload);
+      } catch (lessonError) {
+        setError(getApiErrorMessage(lessonError, "The lesson could not be created. Your draft is still available."));
+        return;
+      }
+
+      setSavePhase("Saving lesson details…");
+      try {
+        await api.put(`/lessons/${lessonResponse.data.data.id}/planning`, {
+          objectives: draft.objectives.split("\n").map((objective) => objective.trim()).filter(Boolean),
+          activities: [
+            draft.motivationActivity,
+            draft.reviewActivity,
+            draft.lessonIntroduction,
+            draft.lessonPresentation,
+            draft.learningActivities,
+            draft.guidedPractice,
+            draft.independentPractice,
+            draft.assessment,
+            draft.assignment,
+          ].filter(Boolean).map((title) => ({ title })),
+          resources: [
+            draft.materials,
+            draft.references,
+            draft.digitalResources,
+            draft.classroomEquipment,
+            draft.additionalResources,
+          ].filter(Boolean).map((name) => ({ name, type: "Lesson resource" })),
+          competency_ids: draft.competencyId ? [Number(draft.competencyId)] : [],
+          reflection: {
+            student_learning: draft.learnerGains,
+            teacher_notes: draft.teacherReflection,
+            challenges: draft.challenges,
+            next_steps: draft.improvements,
+          },
+        });
+      } catch (planningError) {
+        setEditingLessonId(lessonResponse.data.data.id);
+        setError(getApiErrorMessage(planningError, "The lesson was saved, but its details could not be saved. Review the form and retry."));
+        return;
+      }
 
       localStorage.removeItem("nexora_lesson_draft");
       setDraft(emptyDraft);
+      setIsDirty(false);
       setEditingLessonId(null);
       setActiveStep(0);
       setExpandedStep(0);
-      setNotice(editingLessonId ? "Lesson plan updated." : status === "Completed" ? "Lesson plan completed." : "Draft saved.");
-      await load();
-    } catch (submissionError) {
-      setError(getApiErrorMessage(submissionError, "The lesson plan could not be saved."));
+      setNotice(editingLessonId ? "Lesson plan updated successfully." : "Lesson plan saved successfully.");
+      void load().catch(() => setNotice("Lesson plan saved successfully. Refresh the page to reload the latest planner data."));
     } finally {
       setIsSaving(false);
+      setSavePhase("");
     }
   };
 
@@ -630,10 +678,7 @@ function LessonPlanner({ startCreating = false }: { startCreating?: boolean }) {
           <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Create lesson plan</h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{editingLessonId ? "You are editing an existing lesson. Saving updates that lesson." : "Draft is saved automatically in this browser while you type."}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button className={secondaryButton} onClick={() => void saveLesson("Draft")} disabled={isSaving || !draft.title || !draft.date || !draft.schoolYearId || !draft.termId || !draft.gradeId || !draft.subjectId} type="button"><Save className="size-4" /> Save Draft</button>
-          <button className={primaryButton} onClick={() => void saveLesson("Completed")} disabled={isSaving || !draft.title || !draft.date || !draft.schoolYearId || !draft.termId || !draft.gradeId || !draft.subjectId} type="button">{isSaving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />} Finish Lesson Plan</button>
-        </div>
+        <p className="text-sm font-medium text-sky-700 dark:text-sky-300">{savePhase || (isDirty ? "Draft changes saved locally" : "All changes saved")}</p>
       </div>
       <div className="mt-5">
         <div className="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400"><span>Step {activeStep + 1} of {steps.length}</span><span>{progress}% complete</span></div>
@@ -661,7 +706,10 @@ function LessonPlanner({ startCreating = false }: { startCreating?: boolean }) {
         </div>
         <div className="mt-5 flex flex-wrap justify-between gap-2">
           <button className={secondaryButton} disabled={activeStep === 0} onClick={() => { setActiveStep((step) => Math.max(step - 1, 0)); setExpandedStep((step) => Math.max(step - 1, 0)); }} type="button"><ChevronLeft className="size-4" /> Back</button>
-          <button className={secondaryButton} disabled={activeStep === steps.length - 1} onClick={() => { setActiveStep((step) => Math.min(step + 1, steps.length - 1)); setExpandedStep((step) => Math.min(step + 1, steps.length - 1)); }} type="button">Continue <ChevronRight className="size-4" /></button>
+          <div className="ml-auto flex flex-wrap gap-2">
+            <button className={primaryButton} disabled={isSaving} onClick={() => void saveLesson()} type="button">{isSaving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}{isSaving ? savePhase || "Saving…" : "Save Lesson Plan"}</button>
+            <button className={secondaryButton} disabled={activeStep === steps.length - 1 || isSaving} onClick={() => { setActiveStep((step) => Math.min(step + 1, steps.length - 1)); setExpandedStep((step) => Math.min(step + 1, steps.length - 1)); }} type="button">Continue <ChevronRight className="size-4" /></button>
+          </div>
         </div>
       </div>
     </div>
@@ -685,7 +733,7 @@ function LessonPlanner({ startCreating = false }: { startCreating?: boolean }) {
       case 1:
         return <div className="grid gap-5 xl:grid-cols-2"><SmartTextarea label="Learner Profile" value={draft.learnerProfile} onChange={(value) => setField("learnerProfile", value)} /><SmartTextarea label="Learner Background" value={draft.learnerBackground} onChange={(value) => setField("learnerBackground", value)} /><SmartTextarea label="Prior Knowledge" value={draft.priorKnowledge} onChange={(value) => setField("priorKnowledge", value)} /><SmartTextarea label="Learning Needs" value={draft.learningNeeds} onChange={(value) => setField("learningNeeds", value)} /><div className="xl:col-span-2"><SmartTextarea label="Classroom Considerations" value={draft.classroomConsiderations} onChange={(value) => setField("classroomConsiderations", value)} /></div></div>;
       case 2:
-        return <div className="grid gap-5 xl:grid-cols-2"><label className="xl:col-span-2 text-sm font-medium text-slate-700 dark:text-slate-300">Learning Competency<select className={inputClass} onChange={(event) => setField("competencyId", event.target.value)} value={draft.competencyId}><option value="">Add later</option>{competencies.map((competency) => <option key={competency.id} value={competency.id}>{competency.code} - {competency.description}</option>)}</select></label><SmartTextarea label="Learning Competencies" value={draft.learningCompetencies} onChange={(value) => setField("learningCompetencies", value)} /><SmartTextarea label="Learning Objectives" value={draft.objectives} onChange={(value) => setField("objectives", value)} /><SmartTextarea label="Content Standards" value={draft.contentStandards} onChange={(value) => setField("contentStandards", value)} /><SmartTextarea label="Performance Standards" value={draft.performanceStandards} onChange={(value) => setField("performanceStandards", value)} /><SmartTextarea label="Target Skills" value={draft.targetSkills} onChange={(value) => setField("targetSkills", value)} /><div className="grid gap-4 sm:grid-cols-2"><label className="text-sm font-medium text-slate-700 dark:text-slate-300">Lesson Duration<input className={inputClass} onChange={(event) => setField("lessonDuration", event.target.value)} value={draft.lessonDuration} /></label><label className="text-sm font-medium text-slate-700 dark:text-slate-300">Lesson Schedule<input className={inputClass} onChange={(event) => setField("lessonSchedule", event.target.value)} value={draft.lessonSchedule} /></label></div><div className="xl:col-span-2"><SmartTextarea label="Pacing" value={draft.pacing} onChange={(value) => setField("pacing", value)} /></div></div>;
+        return <div className="grid gap-5 xl:grid-cols-2"><label className="xl:col-span-2 text-sm font-medium text-slate-700 dark:text-slate-300">Learning Competency<select className={inputClass} onChange={(event) => setField("competencyId", event.target.value)} value={draft.competencyId}><option value="">Add later</option>{competencies.filter((competency) => competency.grade_id === Number(draft.gradeId) && competency.subject_id === Number(draft.subjectId) && competency.term_id === Number(draft.termId)).map((competency) => <option key={competency.id} value={competency.id}>{competency.code} - {competency.description}</option>)}</select></label><SmartTextarea label="Learning Competencies" value={draft.learningCompetencies} onChange={(value) => setField("learningCompetencies", value)} /><SmartTextarea label="Learning Objectives" value={draft.objectives} onChange={(value) => setField("objectives", value)} /><SmartTextarea label="Content Standards" value={draft.contentStandards} onChange={(value) => setField("contentStandards", value)} /><SmartTextarea label="Performance Standards" value={draft.performanceStandards} onChange={(value) => setField("performanceStandards", value)} /><SmartTextarea label="Target Skills" value={draft.targetSkills} onChange={(value) => setField("targetSkills", value)} /><div className="grid gap-4 sm:grid-cols-2"><label className="text-sm font-medium text-slate-700 dark:text-slate-300">Lesson Duration<input className={inputClass} onChange={(event) => setField("lessonDuration", event.target.value)} value={draft.lessonDuration} /></label><label className="text-sm font-medium text-slate-700 dark:text-slate-300">Lesson Schedule<input className={inputClass} onChange={(event) => setField("lessonSchedule", event.target.value)} value={draft.lessonSchedule} /></label></div><div className="xl:col-span-2"><SmartTextarea label="Pacing" value={draft.pacing} onChange={(value) => setField("pacing", value)} /></div></div>;
       case 3:
         return <div className="grid gap-5 xl:grid-cols-2"><SmartTextarea label="Learning Materials" value={draft.materials} onChange={(value) => setField("materials", value)} /><SmartTextarea label="References" value={draft.references} onChange={(value) => setField("references", value)} /><SmartTextarea label="Digital Resources" value={draft.digitalResources} onChange={(value) => setField("digitalResources", value)} /><SmartTextarea label="Classroom Equipment" value={draft.classroomEquipment} onChange={(value) => setField("classroomEquipment", value)} /><div className="xl:col-span-2"><SmartTextarea label="Additional Resources" value={draft.additionalResources} onChange={(value) => setField("additionalResources", value)} /></div></div>;
       case 4:
@@ -775,7 +823,7 @@ function SmartTextarea({ label, value, onChange }: { label: string; value: strin
       <button className="ml-auto rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white" onClick={() => document.execCommand("undo")} title="Undo" type="button"><Undo2 className="size-4" /></button>
       <button className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white" onClick={() => document.execCommand("redo")} title="Redo" type="button"><Redo2 className="size-4" /></button>
     </div>
-    <textarea className="min-h-48 w-full resize-y bg-transparent px-4 py-3 text-sm leading-6 text-slate-900 outline-none dark:text-white" onChange={(event) => { onChange(event.target.value); event.currentTarget.style.height = "auto"; event.currentTarget.style.height = `${Math.max(event.currentTarget.scrollHeight, 192)}px`; }} rows={7} value={value} />
+    <textarea className="min-h-[100px] max-h-[300px] w-full resize-y bg-transparent px-4 py-3 text-sm leading-6 text-slate-900 outline-none dark:text-white" maxLength={5000} onChange={(event) => onChange(event.target.value)} rows={4} value={value} />
   </div>;
 
   return <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -787,6 +835,7 @@ function SmartTextarea({ label, value, onChange }: { label: string; value: strin
       </div>
     </div>
     {collapsed ? <button className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-left text-sm font-normal text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400" onClick={() => setCollapsed(false)} type="button">{preview}</button> : editor}
+    <p className="mt-1 text-right text-xs font-normal text-slate-400 dark:text-slate-500">{value.length.toLocaleString()} / 5,000 characters</p>
     {expanded ? <div className="fixed inset-0 z-[60] bg-slate-950/60 p-4">
       <section className="mx-auto flex h-full max-w-5xl flex-col rounded-2xl bg-white p-5 shadow-2xl dark:bg-slate-900">
         <div className="mb-4 flex items-center justify-between gap-3">

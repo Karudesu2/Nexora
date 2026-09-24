@@ -42,7 +42,6 @@ class AssessmentController extends ApiController
         );
     }
 
-
     public function store(StoreAssessmentRequest $request): JsonResponse
     {
         $lesson = Lesson::findOrFail($request->integer('lesson_id'));
@@ -57,7 +56,6 @@ class AssessmentController extends ApiController
         );
     }
 
-
     public function show(Request $request, Assessment $assessment): JsonResponse
     {
         $this->authorize('view', $assessment);
@@ -67,7 +65,6 @@ class AssessmentController extends ApiController
             'Assessment retrieved successfully.'
         );
     }
-
 
     public function update(
         Request $request,
@@ -92,7 +89,6 @@ class AssessmentController extends ApiController
             'Assessment updated successfully.'
         );
     }
-
 
     public function destroy(Request $request, Assessment $assessment): JsonResponse
     {

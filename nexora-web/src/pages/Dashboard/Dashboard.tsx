@@ -10,11 +10,11 @@ import {
   ClipboardCheck,
   Clock3,
   Gauge,
-  Loader2,
   Sparkles,
   Target,
 } from "lucide-react";
 import api from "../../services/api";
+import { getApiErrorMessage } from "../../services/getApiErrorMessage";
 
 interface Lesson {
   id: number;
@@ -89,8 +89,8 @@ export default function Dashboard() {
       try {
         const response = await api.get<DashboardResponse>("/dashboard");
         setDashboard(response.data.data);
-      } catch {
-        setError("Unable to load dashboard data. Refresh the page and try again.");
+      } catch (loadError) {
+        setError(getApiErrorMessage(loadError, "Unable to load dashboard data. Refresh the page and try again."));
       } finally {
         setLoading(false);
       }
@@ -108,10 +108,6 @@ export default function Dashboard() {
   }, [dashboard]);
 
   if (loading) return <DashboardSkeleton />;
-
-  if (loading) {
-    return <div className="flex min-h-[60vh] items-center justify-center gap-2 text-sm text-slate-500 dark:text-slate-400"><Loader2 className="size-5 animate-spin" /> Loading your teaching overview…</div>;
-  }
 
   if (error || !dashboard) {
     return <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700 dark:border-red-900/70 dark:bg-red-950/40 dark:text-red-300">{error || "No dashboard data is available."}</div>;

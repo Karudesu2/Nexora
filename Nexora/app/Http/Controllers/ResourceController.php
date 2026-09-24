@@ -42,7 +42,6 @@ class ResourceController extends ApiController
         );
     }
 
-
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -60,8 +59,8 @@ class ResourceController extends ApiController
                 422,
                 [
                     'file' => [
-                        'Add a file or resource link.'
-                    ]
+                        'Add a file or resource link.',
+                    ],
                 ]
             );
         }
@@ -90,7 +89,6 @@ class ResourceController extends ApiController
         );
     }
 
-
     public function update(
         Request $request,
         Resource $resource
@@ -113,7 +111,6 @@ class ResourceController extends ApiController
         );
     }
 
-
     public function download(Resource $resource): StreamedResponse
     {
         $this->authorize('view', $resource);
@@ -132,7 +129,6 @@ class ResourceController extends ApiController
             $resource->name
         );
     }
-
 
     public function destroy(
         Request $request,

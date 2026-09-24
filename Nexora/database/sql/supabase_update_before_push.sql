@@ -42,6 +42,55 @@ create table if not exists sessions (
 create index if not exists sessions_user_id_index on sessions (user_id);
 create index if not exists sessions_last_activity_index on sessions (last_activity);
 
+create table if not exists cache (
+    key varchar(255) primary key,
+    value text not null,
+    expiration bigint not null
+);
+create index if not exists cache_expiration_index on cache (expiration);
+
+create table if not exists cache_locks (
+    key varchar(255) primary key,
+    owner varchar(255) not null,
+    expiration bigint not null
+);
+create index if not exists cache_locks_expiration_index on cache_locks (expiration);
+
+create table if not exists jobs (
+    id bigserial primary key,
+    queue varchar(255) not null,
+    payload text not null,
+    attempts smallint not null,
+    reserved_at integer null,
+    available_at integer not null,
+    created_at integer not null
+);
+create index if not exists jobs_queue_index on jobs (queue);
+
+create table if not exists job_batches (
+    id varchar(255) primary key,
+    name varchar(255) not null,
+    total_jobs integer not null,
+    pending_jobs integer not null,
+    failed_jobs integer not null,
+    failed_job_ids text not null,
+    options text null,
+    cancelled_at integer null,
+    created_at integer not null,
+    finished_at integer null
+);
+
+create table if not exists failed_jobs (
+    id bigserial primary key,
+    uuid varchar(255) not null unique,
+    connection varchar(255) not null,
+    queue varchar(255) not null,
+    payload text not null,
+    exception text not null,
+    failed_at timestamp not null default current_timestamp
+);
+create index if not exists failed_jobs_connection_queue_failed_at_index on failed_jobs (connection, queue, failed_at);
+
 create table if not exists roles (
     id bigserial primary key,
     name varchar(255) not null,
@@ -311,6 +360,124 @@ create table if not exists competency_mappings (
     unique(lesson_id, competency_id)
 );
 
+create table if not exists teacher_assignments (
+    id bigserial primary key,
+    teacher_id bigint not null references users(id) on delete cascade,
+    school_year_id bigint not null references school_years(id) on delete cascade,
+    term_id bigint not null references terms(id) on delete cascade,
+    grade_id bigint not null references grades(id) on delete cascade,
+    subject_id bigint not null references subjects(id) on delete cascade,
+    section varchar(255) not null,
+    created_at timestamp null,
+    updated_at timestamp null,
+    unique(teacher_id, school_year_id, term_id, grade_id, subject_id, section)
+);
+
+create table if not exists teacher_schedules (
+    id bigserial primary key,
+    teacher_assignment_id bigint not null references teacher_assignments(id) on delete cascade,
+    day_of_week varchar(255) not null,
+    start_time time not null,
+    end_time time not null,
+    room varchar(255) null,
+    created_at timestamp null,
+    updated_at timestamp null,
+    unique(teacher_assignment_id, day_of_week, start_time, end_time)
+);
+
+create table if not exists calendar_events (
+    id bigserial primary key,
+    school_year_id bigint not null references school_years(id) on delete cascade,
+    term_id bigint null references terms(id) on delete set null,
+    title varchar(255) not null,
+    type varchar(255) not null,
+    start_date date not null,
+    end_date date null,
+    description text null,
+    is_instructional_day boolean not null default false,
+    is_approved boolean not null default true,
+    created_at timestamp null,
+    updated_at timestamp null
+);
+create index if not exists calendar_events_school_year_id_start_date_end_date_index on calendar_events (school_year_id, start_date, end_date);
+
+create table if not exists assessments (
+    id bigserial primary key,
+    lesson_id bigint not null references lessons(id) on delete cascade,
+    title varchar(255) not null,
+    type varchar(255) null,
+    description text null,
+    total_points numeric(8,2) null,
+    assessment_date date null,
+    created_at timestamp null,
+    updated_at timestamp null
+);
+
+create table if not exists assessment_competencies (
+    id bigserial primary key,
+    assessment_id bigint not null references assessments(id) on delete cascade,
+    competency_id bigint not null references competencies(id) on delete cascade,
+    created_at timestamp null,
+    updated_at timestamp null,
+    unique(assessment_id, competency_id)
+);
+
+create table if not exists resources (
+    id bigserial primary key,
+    teacher_id bigint null references users(id) on delete set null,
+    name varchar(255) not null,
+    type varchar(255) null,
+    description text null,
+    file_path text null,
+    external_url text null,
+    is_public boolean not null default false,
+    created_at timestamp null,
+    updated_at timestamp null
+);
+
+create table if not exists pacing_records (
+    id bigserial primary key,
+    teacher_id bigint not null references users(id) on delete cascade,
+    school_year_id bigint not null references school_years(id) on delete cascade,
+    term_id bigint not null references terms(id) on delete cascade,
+    grade_id bigint not null references grades(id) on delete cascade,
+    subject_id bigint not null references subjects(id) on delete cascade,
+    competency_id bigint null references competencies(id) on delete set null,
+    planned_date date null,
+    actual_date date null,
+    status varchar(255) not null default 'On Track',
+    notes text null,
+    created_at timestamp null,
+    updated_at timestamp null
+);
+create index if not exists pacing_records_teacher_id_term_id_status_index on pacing_records (teacher_id, term_id, status);
+
+create table if not exists activity_logs (
+    id bigserial primary key,
+    user_id bigint null references users(id) on delete set null,
+    action varchar(255) not null,
+    subject_type varchar(255) null,
+    subject_id bigint null,
+    description text null,
+    ip_address inet null,
+    user_agent text null,
+    created_at timestamp null,
+    updated_at timestamp null
+);
+create index if not exists activity_logs_subject_type_subject_id_index on activity_logs (subject_type, subject_id);
+create index if not exists activity_logs_user_id_created_at_index on activity_logs (user_id, created_at);
+
+alter table lesson_templates add column if not exists subject varchar(255) null;
+alter table lesson_templates add column if not exists grade_level varchar(255) null;
+alter table lesson_templates add column if not exists learning_area varchar(255) null;
+alter table lesson_templates add column if not exists file_name varchar(255) null;
+alter table lesson_templates add column if not exists file_path varchar(255) null;
+alter table lesson_templates add column if not exists preview_path varchar(255) null;
+alter table lesson_templates add column if not exists file_mime varchar(120) null;
+alter table lesson_templates add column if not exists file_size integer null;
+alter table lesson_templates add column if not exists processing_status varchar(30) not null default 'ready';
+create index if not exists lesson_templates_subject_grade_level_index on lesson_templates (subject, grade_level);
+
 insert into roles (name, code, description, created_at, updated_at) values
     ('Teacher', 'teacher', null, now(), now()),
     ('Curriculum Coordinator', 'curriculum_coordinator', null, now(), now()),
@@ -377,6 +544,8 @@ select migration, coalesce((select max(batch) from migrations), 0) + 1
 from (
     values
         ('0001_01_01_000000_create_users_table'),
+        ('0001_01_01_000001_create_cache_table'),
+        ('0001_01_01_000002_create_jobs_table'),
         ('2026_09_21_041236_create_personal_access_tokens_table'),
         ('2026_09_21_060202_create_roles_table'),
         ('2026_09_21_060203_create_role_user_table'),
@@ -386,21 +555,36 @@ from (
         ('2026_09_21_033306_create_subjects_table'),
         ('2026_09_21_033307_create_curriculum_versions_table'),
         ('2026_09_21_033308_create_competencies_table'),
+        ('2026_09_21_033309_create_teacher_assignments_table'),
+        ('2026_09_21_033310_create_teacher_schedules_table'),
+        ('2026_09_21_033311_create_calendar_events_table'),
         ('2026_09_21_033312_create_lessons_table'),
         ('2026_09_21_033313_create_lesson_objectives_table'),
         ('2026_09_21_033314_create_lesson_activities_table'),
         ('2026_09_21_033315_create_lesson_resources_table'),
         ('2026_09_21_033316_create_lesson_reflections_table'),
         ('2026_09_21_033317_create_competency_mappings_table'),
+        ('2026_09_21_033318_create_assessments_table'),
+        ('2026_09_21_033319_create_assessment_competencies_table'),
+        ('2026_09_21_033320_create_resources_table'),
         ('2026_09_21_033321_create_notifications_table'),
+        ('2026_09_21_033322_create_pacing_records_table'),
+        ('2026_09_21_033323_create_activity_logs_table'),
+        ('2026_09_21_070933_repair_role_schema'),
         ('2026_09_21_100000_add_name_components_to_users_table'),
         ('2026_09_21_100001_add_differentiation_to_lessons_table'),
+        ('2026_09_21_104248_synchronize_school_years_schema'),
         ('2026_09_21_110000_add_is_active_to_users_table'),
+        ('2026_09_22_002907_synchronize_calendar_events_schema'),
+        ('2026_09_22_020100_synchronize_terms_schema'),
+        ('2026_09_22_021829_synchronize_resources_assessments_curriculum_versions_schema'),
         ('2026_09_22_120000_add_structured_plan_to_lessons_table'),
         ('2026_09_22_120100_create_lesson_versions_table'),
         ('2026_09_22_130000_create_feedback_reports_table'),
         ('2026_09_22_131000_create_lesson_templates_table'),
-        ('2026_09_22_132000_create_system_announcements_table')
+        ('2026_09_22_132000_create_system_announcements_table'),
+        ('2026_09_22_132000_extend_lesson_templates_for_documents'),
+        ('2026_09_23_060309_add_type_to_resources_table')
 ) as m(migration)
 where not exists (
     select 1 from migrations existing where existing.migration = m.migration

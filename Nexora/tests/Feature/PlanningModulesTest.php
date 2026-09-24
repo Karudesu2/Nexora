@@ -172,6 +172,21 @@ class PlanningModulesTest extends TestCase
             );
     }
 
+    public function test_competency_list_includes_context_ids_for_planner_filtering(): void
+    {
+        $teacher = User::factory()->create();
+        $context = $this->createContext();
+
+        Sanctum::actingAs($teacher);
+
+        $this->getJson('/api/v1/competencies')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $context['competency']->id)
+            ->assertJsonPath('data.0.grade_id', $context['grade']->id)
+            ->assertJsonPath('data.0.subject_id', $context['subject']->id)
+            ->assertJsonPath('data.0.term_id', $context['term']->id);
+    }
+
     /**
      * @return array{schoolYear: SchoolYear, term: Term, grade: Grade, subject: Subject, competency: Competency}
      */

@@ -227,7 +227,7 @@ class LessonController extends ApiController
 
     private function extractDocxText(string $fullPath): string
     {
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
 
         if ($zip->open($fullPath) !== true) {
             return '';

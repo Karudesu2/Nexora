@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureSchoolAdministrator;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -9,6 +10,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -20,7 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'school-administrator' => \App\Http\Middleware\EnsureSchoolAdministrator::class,
+            'school-administrator' => EnsureSchoolAdministrator::class,
         ]);
 
         $middleware->redirectGuestsTo(function (Request $request) {
@@ -81,6 +83,21 @@ return Application::configure(basePath: dirname(__DIR__))
             ], 404);
         });
 
+        $exceptions->render(function (HttpExceptionInterface $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            if ($exception->getStatusCode() !== 403) {
+                return null;
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not authorized to perform this action.',
+            ], 403);
+        });
+
         $exceptions->render(function (QueryException $exception, Request $request) {
             if (! $request->is('api/*')) {
                 return null;
@@ -90,7 +107,20 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return response()->json([
                 'success' => false,
-                'message' => 'A server error occurred. Please try again later.',
+                'message' => 'Something went wrong on the server. Please try again.',
+            ], 500);
+        });
+
+        $exceptions->render(function (Throwable $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            report($exception);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong on the server. Please try again.',
             ], 500);
         });
     })->create();

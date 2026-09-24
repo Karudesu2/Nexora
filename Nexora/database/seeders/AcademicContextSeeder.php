@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\SchoolYear;
-use App\Models\Term;
 use App\Models\Grade;
+use App\Models\SchoolYear;
 use App\Models\Subject;
+use App\Models\Term;
 use Illuminate\Database\Seeder;
 
 class AcademicContextSeeder extends Seeder
@@ -61,7 +61,6 @@ class AcademicContextSeeder extends Seeder
             ]
         );
 
-
         // Create Grades
         $grades = [
             [
@@ -84,7 +83,6 @@ class AcademicContextSeeder extends Seeder
                 $grade
             );
         }
-
 
         // Create Subjects
         $subjects = [
