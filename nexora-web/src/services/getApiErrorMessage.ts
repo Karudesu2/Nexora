@@ -15,8 +15,8 @@ export function getApiErrorMessage(error: unknown, fallback: string): string {
   }
 
   if (!error.response) {
-    return error.code === "ECONNABORTED"
-      ? "The request timed out. Please try again."
+    return ["ECONNABORTED", "ETIMEDOUT"].includes(error.code || "")
+      ? "The API took too long to respond. Please try again in a moment."
       : "Unable to connect to NEXORA. Check your connection and try again.";
   }
 
