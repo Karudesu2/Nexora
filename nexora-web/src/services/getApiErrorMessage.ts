@@ -10,6 +10,10 @@ export function getApiErrorMessage(error: unknown, fallback: string): string {
     return fallback;
   }
 
+  if (error.code === "ERR_API_CONFIGURATION") {
+    return "NEXORA is not configured with a production API address. Please contact the administrator.";
+  }
+
   if (!error.response) {
     return error.code === "ECONNABORTED"
       ? "The request timed out. Please try again."

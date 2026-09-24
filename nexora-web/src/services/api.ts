@@ -2,9 +2,11 @@ import axios from "axios";
 import { clearAuthToken, getAuthToken, markSessionExpired } from "./authToken";
 
 export const sessionExpiredEvent = "nexora:session-expired";
+const apiBaseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "/api/v1" : undefined);
+const apiConfigurationErrorCode = "ERR_API_CONFIGURATION";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api/v1",
+  baseURL: apiBaseUrl,
   timeout: 15_000,
   headers: {
     Accept: "application/json",
@@ -13,6 +15,16 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
+  if (!apiBaseUrl) {
+    return Promise.reject(
+      new axios.AxiosError(
+        "VITE_API_URL must be configured for production builds.",
+        apiConfigurationErrorCode,
+        config,
+      ),
+    );
+  }
+
   const token = getAuthToken();
 
   if (token) {
