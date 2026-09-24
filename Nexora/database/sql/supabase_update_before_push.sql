@@ -1,5 +1,6 @@
 -- NEXORA Supabase SQL update before push/sync
--- Run this in Supabase SQL Editor for the production database.
+-- Run this in the LOCAL Supabase SQL Editor first. Apply to production only
+-- after local verification and an explicit production deployment decision.
 -- This app uses Laravel authentication tables, not Supabase Auth's auth.users.
 
 begin;
@@ -242,6 +243,17 @@ alter table lessons add column if not exists source_file_name varchar(255) null;
 alter table lessons add column if not exists source_file_path varchar(255) null;
 alter table lessons add column if not exists source_file_mime varchar(255) null;
 
+-- Repair columns introduced after the original tables may already exist.
+alter table users add column if not exists first_name varchar(255) null;
+alter table users add column if not exists middle_name varchar(255) null;
+alter table users add column if not exists last_name varchar(255) null;
+alter table users add column if not exists is_active boolean not null default true;
+alter table school_years add column if not exists is_active boolean not null default false;
+alter table terms add column if not exists is_active boolean not null default false;
+alter table resources add column if not exists type varchar(255) null;
+alter table resources add column if not exists is_public boolean not null default false;
+alter table assessments add column if not exists assessment_date date null;
+
 create table if not exists lesson_versions (
     id bigserial primary key,
     lesson_id bigint not null references lessons(id) on delete cascade,
@@ -399,6 +411,36 @@ create table if not exists calendar_events (
     created_at timestamp null,
     updated_at timestamp null
 );
+
+do $$
+begin
+    if exists (
+        select 1 from information_schema.columns
+        where table_schema = current_schema() and table_name = 'calendar_events' and column_name = 'event_date'
+    ) and not exists (
+        select 1 from information_schema.columns
+        where table_schema = current_schema() and table_name = 'calendar_events' and column_name = 'start_date'
+    ) then
+        alter table calendar_events rename column event_date to start_date;
+    end if;
+
+    if exists (
+        select 1 from information_schema.columns
+        where table_schema = current_schema() and table_name = 'calendar_events' and column_name = 'event_type'
+    ) and not exists (
+        select 1 from information_schema.columns
+        where table_schema = current_schema() and table_name = 'calendar_events' and column_name = 'type'
+    ) then
+        alter table calendar_events rename column event_type to type;
+    end if;
+end $$;
+
+alter table calendar_events add column if not exists type varchar(255) null;
+alter table calendar_events add column if not exists start_date date null;
+alter table calendar_events add column if not exists end_date date null;
+alter table calendar_events add column if not exists description text null;
+alter table calendar_events add column if not exists is_instructional_day boolean not null default false;
+alter table calendar_events add column if not exists is_approved boolean not null default true;
 create index if not exists calendar_events_school_year_id_start_date_end_date_index on calendar_events (school_year_id, start_date, end_date);
 
 create table if not exists assessments (
@@ -524,20 +566,6 @@ where not exists (
     select 1 from subjects existing
     where existing.name = subject.name or existing.code = subject.code
 );
-
--- Optional initial production teacher account.
--- Email: testteacher@nexora.test
--- Password: password123
-insert into users (name, email, password, is_active, created_at, updated_at)
-values ('Test Teacher', 'testteacher@nexora.test', '$2y$12$0OrfNa4DIf5QR05KaXuUf.lk.vT6.Vbqfv5DE0AQCVwwIiPdwUIVS', true, now(), now())
-on conflict (email) do nothing;
-
-insert into role_user (role_id, user_id, created_at, updated_at)
-select r.id, u.id, now(), now()
-from roles r
-join users u on u.email = 'testteacher@nexora.test'
-where r.code = 'teacher'
-on conflict (role_id, user_id) do nothing;
 
 insert into migrations (migration, batch)
 select migration, coalesce((select max(batch) from migrations), 0) + 1

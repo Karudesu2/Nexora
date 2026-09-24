@@ -6,6 +6,7 @@ use App\Models\CalendarEvent;
 use App\Models\Term;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 
 class CalendarController extends ApiController
@@ -17,21 +18,37 @@ class CalendarController extends ApiController
     {
         $this->authorize('viewAny', CalendarEvent::class);
 
+        $filters = $request->validate([
+            'start_date' => ['sometimes', 'date'],
+            'end_date' => ['sometimes', 'date'],
+        ]);
+
+        if (isset($filters['start_date'], $filters['end_date'])
+            && Carbon::parse($filters['end_date'])->lt($filters['start_date'])) {
+            throw ValidationException::withMessages([
+                'end_date' => ['The end date must be on or after the start date.'],
+            ]);
+        }
+
         $events = CalendarEvent::query()
             ->when(
-                $request->filled('start_date'),
-                fn ($query) => $query->whereDate(
-                    'start_date',
-                    '>=',
-                    $request->start_date
-                )
+                isset($filters['start_date']),
+                function ($query) use ($filters): void {
+                    $query->where(function ($query) use ($filters): void {
+                        $query->whereDate('end_date', '>=', $filters['start_date'])
+                            ->orWhere(function ($query) use ($filters): void {
+                                $query->whereNull('end_date')
+                                    ->whereDate('start_date', '>=', $filters['start_date']);
+                            });
+                    });
+                }
             )
             ->when(
-                $request->filled('end_date'),
+                isset($filters['end_date']),
                 fn ($query) => $query->whereDate(
                     'start_date',
                     '<=',
-                    $request->end_date
+                    $filters['end_date']
                 )
             )
             ->select([

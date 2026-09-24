@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Role;
+use App\Models\CalendarEvent;
+use App\Models\SchoolYear;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -27,6 +29,38 @@ class CalendarApiTest extends TestCase
         Sanctum::actingAs($this->userWithRole('school_administrator'));
 
         $this->getJson('/api/v1/calendar')->assertOk();
+    }
+
+    public function test_calendar_date_range_includes_events_that_overlap_the_range(): void
+    {
+        Sanctum::actingAs($this->userWithRole('teacher'));
+
+        $schoolYear = SchoolYear::query()->create([
+            'name' => '2026-2027',
+            'start_date' => '2026-06-01',
+            'end_date' => '2027-03-31',
+        ]);
+
+        CalendarEvent::query()->create([
+            'school_year_id' => $schoolYear->id,
+            'title' => 'Multi-day event',
+            'type' => 'Holiday',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-09-05',
+        ]);
+
+        $this->getJson('/api/v1/calendar?start_date=2026-09-03&end_date=2026-09-04')
+            ->assertOk()
+            ->assertJsonCount(1, 'data');
+    }
+
+    public function test_calendar_date_range_rejects_invalid_dates(): void
+    {
+        Sanctum::actingAs($this->userWithRole('teacher'));
+
+        $this->getJson('/api/v1/calendar?start_date=not-a-date')
+            ->assertUnprocessable()
+            ->assertJsonPath('success', false);
     }
 
     private function userWithRole(string $roleCode): User
