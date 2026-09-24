@@ -48,6 +48,24 @@ class AuthorizationTest extends TestCase
             ->assertJsonPath('data.user.id', $user->id);
     }
 
+    public function test_user_with_a_legacy_argon_password_hash_can_login_and_is_rehashed(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'teacher@example.test',
+            'password' => password_hash('password', PASSWORD_ARGON2ID),
+        ]);
+
+        $this->postJson('/api/v1/auth/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.user.id', $user->id);
+
+        $this->assertStringStartsWith('$2y$', $user->fresh()->password);
+    }
+
     public function test_login_token_authenticates_the_primary_teacher_api_modules(): void
     {
         $user = User::factory()->create(['email' => 'teacher@example.test']);

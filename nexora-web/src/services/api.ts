@@ -2,9 +2,7 @@ import axios from "axios";
 import { clearAuthToken, getAuthToken, markSessionExpired } from "./authToken";
 
 export const sessionExpiredEvent = "nexora:session-expired";
-const apiBaseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV
-  ? "/api/v1"
-  : "https://nexora-production-4783.up.railway.app/api/v1");
+const apiBaseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "/api/v1" : "");
 const apiConfigurationErrorCode = "ERR_API_CONFIGURATION";
 
 const api = axios.create({

@@ -33,5 +33,17 @@ export function getApiErrorMessage(error: unknown, fallback: string): string {
     return "Something went wrong on the server. Please try again.";
   }
 
+  if (error.response.status === 401) {
+    return "Your session has expired. Please sign in again.";
+  }
+
+  if (error.response.status === 403) {
+    return "You do not have permission to do that.";
+  }
+
+  if (error.response.status === 404) {
+    return "The requested NEXORA item could not be found.";
+  }
+
   return response?.message || fallback;
 }

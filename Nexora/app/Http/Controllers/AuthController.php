@@ -6,10 +6,10 @@ use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Auth\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -44,28 +44,15 @@ class AuthController extends ApiController
     /**
      * Login user.
      */
-    public function login(LoginRequest $request): JsonResponse
+    public function login(LoginRequest $request, AuthService $authService): JsonResponse
     {
         $credentials = $request->validated();
         $email = Str::lower(trim($credentials['email']));
-
-        $user = User::where('email', $email)->first();
-
-        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-            ]);
-        }
-
-        $user->tokens()
-            ->where('name', 'nexora-web')
-            ->delete();
-
-        $token = $user->createToken('nexora-web')->plainTextToken;
+        $authentication = $authService->login($email, $credentials['password']);
 
         return $this->success([
-            'user' => $this->userPayload($user),
-            'token' => $token,
+            'user' => $this->userPayload($authentication['user']),
+            'token' => $authentication['token'],
         ], 'Login successful.');
     }
 
