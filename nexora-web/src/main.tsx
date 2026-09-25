@@ -1,4 +1,3 @@
-import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import "./index.css";
@@ -8,15 +7,13 @@ import { ErrorBoundary } from "./ErrorBoundary";
 import { ThemeProvider } from "./theme";
 
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <ThemeProvider>
-      <BrowserRouter>
-        <ErrorBoundary>
-          <AuthProvider>
-            <App />
-          </AuthProvider>
-        </ErrorBoundary>
-      </BrowserRouter>
-    </ThemeProvider>
-  </StrictMode>,
+  <ThemeProvider>
+    <BrowserRouter>
+      <ErrorBoundary>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </ErrorBoundary>
+    </BrowserRouter>
+  </ThemeProvider>,
 );

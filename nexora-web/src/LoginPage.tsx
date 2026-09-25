@@ -28,8 +28,12 @@ export function LoginPage() {
 
     try {
       const authenticatedUser = await login(email, password);
+      const from = location.state?.from as { pathname?: string; search?: string; hash?: string } | undefined;
+      const defaultDestination = authenticatedUser.role_codes?.some((role) => ["school_administrator", "administrator"].includes(role))
+        ? "/admin/dashboard"
+        : "/";
       navigate(
-        authenticatedUser.role_codes?.some((role) => ["school_administrator", "administrator"].includes(role)) ? "/admin/dashboard" : "/",
+        from?.pathname ? `${from.pathname}${from.search ?? ""}${from.hash ?? ""}` : defaultDestination,
         { replace: true },
       );
     } catch (submissionError) {

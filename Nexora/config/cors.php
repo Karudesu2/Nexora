@@ -1,7 +1,11 @@
 <?php
 
 return [
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+
+    'paths' => [
+        'api/*',
+        'sanctum/csrf-cookie',
+    ],
 
     'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 
@@ -10,6 +14,7 @@ return [
         'https://nexora-tau-tan.vercel.app',
         'https://nexora-git-main-karudesu2.vercel.app',
     ]))),
+
     'allowed_origins_patterns' => [],
 
     'allowed_headers' => ['Authorization', 'Content-Type', 'Accept'],
@@ -19,4 +24,5 @@ return [
     'max_age' => 0,
 
     'supports_credentials' => false,
+
 ];

@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('resources', function (Blueprint $table) {
-            $table->text('external_url')->nullable()->after('file_url');
-        });
+        if (! Schema::hasColumn('resources', 'external_url')) {
+            Schema::table('resources', function (Blueprint $table) {
+                $table->text('external_url')->nullable()->after('file_url');
+            });
+        }
     }
 
     /**
@@ -21,8 +23,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('resources', function (Blueprint $table) {
-            $table->dropColumn('external_url');
-        });
+        if (Schema::hasColumn('resources', 'external_url')) {
+            Schema::table('resources', function (Blueprint $table) {
+                $table->dropColumn('external_url');
+            });
+        }
     }
 };

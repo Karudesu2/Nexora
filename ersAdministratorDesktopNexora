@@ -1,0 +1,159 @@
+[1mdiff --git a/Nexora/.env.example b/Nexora/.env.example[m
+[1mindex 0b988e3..60f9bfd 100644[m
+[1m--- a/Nexora/.env.example[m
+[1m+++ b/Nexora/.env.example[m
+[36m@@ -2,10 +2,10 @@[m [mAPP_NAME=NEXORA[m
+ APP_ENV=local[m
+ APP_KEY=[m
+ APP_DEBUG=true[m
+[31m-APP_URL=http://localhost[m
+[32m+[m[32mAPP_URL=http://127.0.0.1:8000[m
+[32m+[m
+ CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173[m
+[31m-# Comma-separated browser origins allowed to call the protected API in production.[m
+[31m-# Keep this aligned with the deployed Vercel/custom frontend domains.[m
+[32m+[m
+ SANCTUM_STATEFUL_DOMAINS=localhost:5173,127.0.0.1:5173[m
+ [m
+ LOG_CHANNEL=stack[m
+[1mdiff --git a/Nexora/config/cors.php b/Nexora/config/cors.php[m
+[1mindex 3ac68c6..bc3df12 100644[m
+[1m--- a/Nexora/config/cors.php[m
+[1m+++ b/Nexora/config/cors.php[m
+[36m@@ -1,22 +1,33 @@[m
+ <?php[m
+ [m
+ return [[m
+[31m-    'paths' => ['api/*', 'sanctum/csrf-cookie'],[m
+ [m
+[31m-    'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],[m
+[32m+[m[32m    'paths' => [[m
+[32m+[m[32m        'api/*',[m
+[32m+[m[32m        'sanctum/csrf-cookie',[m
+[32m+[m[32m    ],[m
+ [m
+[31m-    'allowed_origins' => array_values(array_unique(array_filter([[m
+[31m-        ...explode(',', (string) env('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173')),[m
+[32m+[m[32m    'allowed_methods' => [[m
+[32m+[m[32m        '*',[m
+[32m+[m[32m    ],[m
+[32m+[m
+[32m+[m[32m    'allowed_origins' => [[m
+[32m+[m[32m        'http://localhost:5173',[m
+[32m+[m[32m        'http://127.0.0.1:5173',[m
+         'https://nexora-tau-tan.vercel.app',[m
+         'https://nexora-git-main-karudesu2.vercel.app',[m
+[31m-    ]))),[m
+[32m+[m[32m    ],[m
+[32m+[m
+     'allowed_origins_patterns' => [],[m
+ [m
+[31m-    'allowed_headers' => ['Authorization', 'Content-Type', 'Accept'],[m
+[32m+[m[32m    'allowed_headers' => [[m
+[32m+[m[32m        '*',[m
+[32m+[m[32m    ],[m
+ [m
+     'exposed_headers' => [],[m
+ [m
+     'max_age' => 0,[m
+ [m
+     'supports_credentials' => false,[m
+[31m-];[m
+[32m+[m
+[32m+[m[32m];[m
+\ No newline at end of file[m
+[1mdiff --git a/nexora-web/src/ApiDebugPanel.tsx b/nexora-web/src/ApiDebugPanel.tsx[m
+[1mnew file mode 100644[m
+[1mindex 0000000..6ae40ba[m
+[1m--- /dev/null[m
+[1m+++ b/nexora-web/src/ApiDebugPanel.tsx[m
+[36m@@ -0,0 +1,32 @@[m
+[32m+[m[32mimport { useSyncExternalStore } from "react";[m
+[32m+[m[32mimport { getApiDiagnostics, subscribeToApiDiagnostics } from "./services/apiDiagnostics";[m
+[32m+[m
+[32m+[m[32mexport function ApiDebugPanel() {[m
+[32m+[m[32m  const diagnostics = useSyncExternalStore([m
+[32m+[m[32m    subscribeToApiDiagnostics,[m
+[32m+[m[32m    getApiDiagnostics,[m
+[32m+[m[32m    getApiDiagnostics,[m
+[32m+[m[32m  );[m
+[32m+[m
+[32m+[m[32m  if (!import.meta.env.DEV) {[m
+[32m+[m[32m    return null;[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  return ([m
+[32m+[m[32m    <details className="fixed bottom-3 right-3 z-[100] max-w-[min(24rem,calc(100vw-1.5rem))] rounded-xl border border-slate-700 bg-slate-950/95 p-3 text-xs text-slate-100 shadow-xl">[m
+[32m+[m[32m      <summary className="cursor-pointer font-semibold">API debug</summary>[m
+[32m+[m[32m      <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 break-words">[m
+[32m+[m[32m        <dt className="text-slate-400">API URL</dt>[m
+[32m+[m[32m        <dd>{diagnostics.apiUrl}</dd>[m
+[32m+[m[32m        <dt className="text-slate-400">Auth</dt>[m
+[32m+[m[32m        <dd>{diagnostics.authenticationStatus}</dd>[m
+[32m+[m[32m        <dt className="text-slate-400">Token</dt>[m
+[32m+[m[32m        <dd>{diagnostics.tokenExists ? "Present" : "Not found"}</dd>[m
+[32m+[m[32m        <dt className="text-slate-400">Last error</dt>[m
+[32m+[m[32m        <dd>{diagnostics.lastApiError || "None"}</dd>[m
+[32m+[m[32m        <dt className="text-slate-400">Failed endpoint</dt>[m
+[32m+[m[32m        <dd>{diagnostics.failedEndpoint || "None"}</dd>[m
+[32m+[m[32m      </dl>[m
+[32m+[m[32m    </details>[m
+[32m+[m[32m  );[m
+[32m+[m[32m}[m
+[1mdiff --git a/nexora-web/src/App.tsx b/nexora-web/src/App.tsx[m
+[1mindex 472305f..3b4ebfe 100644[m
+[1m--- a/nexora-web/src/App.tsx[m
+[1m+++ b/nexora-web/src/App.tsx[m
+[36m@@ -5,6 +5,7 @@[m [mimport Dashboard from "./pages/Dashboard/Dashboard";[m
+ import { LoginPage } from "./LoginPage";[m
+ import { ProtectedRoute } from "./ProtectedRoute";[m
+ import { RegisterPage } from "./RegisterPage";[m
+[32m+[m[32mimport { ApiDebugPanel } from "./ApiDebugPanel";[m
+ [m
+ const CalendarPage = lazy(() => import("./pages/CalendarPage").then(({ CalendarPage: Page }) => ({ default: Page })));[m
+ const ModulePage = lazy(() => import("./pages/ModulePage").then(({ ModulePage: Page }) => ({ default: Page })));[m
+[36m@@ -30,34 +31,37 @@[m [mfunction PageLoader() {[m
+ [m
+ export default function App() {[m
+   return ([m
+[31m-    <Suspense fallback={<PageLoader />}><Routes>[m
+[31m-      <Route path="/login" element={<LoginPage />} />[m
+[31m-      <Route path="/register" element={<RegisterPage />} />[m
+[31m-      <Route element={<ProtectedRoute />}>[m
+[31m-        <Route element={<MainLayout />}>[m
+[31m-          <Route path="/" element={<Dashboard />} />[m
+[31m-          <Route path="/calendar" element={<CalendarPage />} />[m
+[31m-          <Route path="/competencies" element={<ModulePage module="competencies" />} />[m
+[31m-          <Route path="/lessons" element={<LessonsPage />} />[m
+[31m-          <Route path="/lessons/create" element={<Navigate to="/lessons" replace />} />[m
+[31m-          <Route path="/templates" element={<TemplatesPage />} />[m
+[31m-          <Route path="/assessments" element={<AssessmentsPage />} />[m
+[31m-          <Route path="/resources" element={<ResourcesPage />} />[m
+[31m-          <Route path="/announcements" element={<AnnouncementsPage />} />[m
+[31m-          <Route path="/feedback" element={<FeedbackPage />} />[m
+[31m-          <Route path="/notifications" element={<NotificationsPage />} />[m
+[31m-          <Route path="/alignment" element={<AlignmentPage />} />[m
+[31m-          <Route path="/administration" element={<AdministrationPage />} />[m
+[31m-          <Route path="/administration/users" element={<UserManagementPage />} />[m
+[31m-          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />[m
+[31m-          <Route path="/admin/feedback" element={<AdminFeedbackPage />} />[m
+[31m-          <Route path="/pacing" element={<PacingPage />} />[m
+[31m-          <Route path="/reports" element={<ReportsPage />} />[m
+[31m-          <Route path="/settings" element={<SettingsPage />} />[m
+[32m+[m[32m    <>[m
+[32m+[m[32m      <Suspense fallback={<PageLoader />}><Routes>[m
+[32m+[m[32m        <Route path="/login" element={<LoginPage />} />[m
+[32m+[m[32m        <Route path="/register" element={<RegisterPage />} />[m
+[32m+[m[32m        <Route element={<ProtectedRoute />}>[m
+[32m+[m[32m          <Route element={<MainLayout />}>[m
+[32m+[m[32m            <Route path="/" element={<Dashboard />} />[m
+[32m+[m[32m            <Route path="/calendar" element={<CalendarPage />} />[m
+[32m+[m[32m            <Route path="/competencies" element={<ModulePage module="competencies" />} />[m
+[32m+[m[32m            <Route path="/lessons" element={<LessonsPage />} />[m
+[32m+[m[32m            <Route path="/lessons/create" element={<Navigate to="/lessons" replace />} />[m
+[32m+[m[32m            <Route path="/templates" element={<TemplatesPage />} />[m
+[32m+[m[32m            <Route path="/assessments" element={<AssessmentsPage />} />[m
+[32m+[m[32m            <Route path="/resources" element={<ResourcesPage />} />[m
+[32m+[m[32m            <Route path="/announcements" element={<AnnouncementsPage />} />[m
+[32m+[m[32m            <Route path="/feedback" element={<FeedbackPage />} />[m
+[32m+[m[32m            <Route path="/notific

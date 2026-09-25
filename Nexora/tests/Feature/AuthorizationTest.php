@@ -11,6 +11,7 @@ use App\Models\Subject;
 use App\Models\Term;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -50,10 +51,10 @@ class AuthorizationTest extends TestCase
 
     public function test_user_with_a_legacy_argon_password_hash_can_login_and_is_rehashed(): void
     {
-        $user = User::factory()->create([
-            'email' => 'teacher@example.test',
-            'password' => password_hash('password', PASSWORD_ARGON2ID),
-        ]);
+        $user = User::factory()->create(['email' => 'teacher@example.test']);
+        DB::table('users')
+            ->where('id', $user->id)
+            ->update(['password' => password_hash('password', PASSWORD_ARGON2ID)]);
 
         $this->postJson('/api/v1/auth/login', [
             'email' => $user->email,

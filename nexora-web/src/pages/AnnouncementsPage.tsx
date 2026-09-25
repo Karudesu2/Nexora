@@ -109,8 +109,16 @@ export function AnnouncementsPage() {
 
   const remove = async (announcement: Announcement) => {
     if (!window.confirm(`Delete announcement "${announcement.title}"?`)) return;
-    await api.delete(`/admin/announcements/${announcement.id}`);
-    await load();
+    setError("");
+    setNotice("");
+
+    try {
+      await api.delete(`/admin/announcements/${announcement.id}`);
+      setNotice("Announcement deleted.");
+      await load();
+    } catch (deleteError) {
+      setError(getApiErrorMessage(deleteError, "Announcement could not be deleted."));
+    }
   };
 
   return (

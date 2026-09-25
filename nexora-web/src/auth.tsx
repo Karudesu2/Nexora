@@ -6,12 +6,15 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import type { ReactNode } from "react";
-import api from "./services/api";
+import axios from "axios";
+import api, { sessionExpiredEvent } from "./services/api";
 import { clearAuthToken, getAuthToken, saveAuthToken } from "./services/authToken";
-import { sessionExpiredEvent } from "./services/api";
+import { getApiErrorMessage } from "./services/getApiErrorMessage";
+import { updateApiDiagnostics } from "./services/apiDiagnostics";
 
 interface AuthUser {
   id: number;
@@ -43,10 +46,18 @@ interface ProfileResponse {
 interface AuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
+  authError: string | null;
   login: (email: string, password: string) => Promise<AuthUser>;
   register: (payload: RegistrationPayload) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  retrySession: () => Promise<void>;
+}
+
+interface SessionRestoreResult {
+  user: AuthUser | null;
+  error: string | null;
+  tokenExists: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -58,39 +69,87 @@ export function AuthProvider({
 }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const restorePromise = useRef<Promise<SessionRestoreResult> | null>(null);
+  const authRevision = useRef(0);
 
   const refreshUser = useCallback(async () => {
     const response = await api.get<ProfileResponse>("/auth/profile");
 
     setUser(response.data.data.user);
+    setAuthError(null);
+  }, []);
+
+  const restoreSavedSession = useCallback(async (): Promise<SessionRestoreResult> => {
+    const token = getAuthToken();
+
+    if (!token) {
+      return { user: null, error: null, tokenExists: false };
+    }
+
+    try {
+      const response = await api.get<ProfileResponse>("/auth/profile");
+
+      return {
+        user: response.data.data.user,
+        error: null,
+        tokenExists: Boolean(getAuthToken()),
+      };
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        clearAuthToken();
+
+        return { user: null, error: null, tokenExists: false };
+      }
+
+      return {
+        user: null,
+        error: getApiErrorMessage(error, "Unable to verify your saved session. Check your connection and retry."),
+        tokenExists: Boolean(getAuthToken()),
+      };
+    }
   }, []);
 
   useEffect(() => {
-    const restoreSession = async () => {
-      const token = getAuthToken();
+    let isMounted = true;
+    const revision = authRevision.current;
+    const pendingRestore = restorePromise.current ??= restoreSavedSession();
 
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
+    void pendingRestore
+      .then((result) => {
+        if (!isMounted || revision !== authRevision.current) {
+          return;
+        }
 
-      try {
-        await refreshUser();
-      } catch {
-        clearAuthToken();
-        setUser(null);
-      } finally {
+        setUser(result.user);
+        setAuthError(result.error);
         setIsLoading(false);
-      }
+      })
+      .finally(() => {
+        if (restorePromise.current === pendingRestore) {
+          restorePromise.current = null;
+        }
+      });
+
+    return () => {
+      isMounted = false;
     };
+  }, [restoreSavedSession]);
 
-    void restoreSession();
-  }, [refreshUser]);
+  useEffect(() => {
+    updateApiDiagnostics({
+      authenticationStatus: isLoading ? "checking" : authError ? "error" : user ? "authenticated" : "signed out",
+      tokenExists: Boolean(getAuthToken()),
+    });
+  }, [authError, isLoading, user]);
 
   useEffect(() => {
     const expireSession = () => {
+      authRevision.current += 1;
       clearAuthToken();
       setUser(null);
+      setAuthError(null);
+      setIsLoading(false);
     };
 
     window.addEventListener(sessionExpiredEvent, expireSession);
@@ -102,6 +161,7 @@ export function AuthProvider({
     email: string,
     password: string,
   ) => {
+    authRevision.current += 1;
     const response = await api.post<AuthenticationResponse>(
       "/auth/login",
       { email, password },
@@ -109,6 +169,8 @@ export function AuthProvider({
 
     saveAuthToken(response.data.data.token);
     setUser(response.data.data.user);
+    setAuthError(null);
+    setIsLoading(false);
 
     return response.data.data.user;
   };
@@ -116,6 +178,7 @@ export function AuthProvider({
   const register = async (
     payload: RegistrationPayload,
   ) => {
+    authRevision.current += 1;
     const response =
       await api.post<AuthenticationResponse>(
         "/auth/register",
@@ -125,27 +188,49 @@ export function AuthProvider({
     saveAuthToken(response.data.data.token);
 
     setUser(response.data.data.user);
+    setAuthError(null);
+    setIsLoading(false);
 
   };
 
   const logout = async () => {
+    authRevision.current += 1;
     try {
       await api.post("/auth/logout");
     } finally {
       clearAuthToken();
       setUser(null);
+      setAuthError(null);
+      setIsLoading(false);
     }
   };
+
+  const retrySession = useCallback(async () => {
+    const revision = ++authRevision.current;
+    setIsLoading(true);
+    setAuthError(null);
+
+    const result = await restoreSavedSession();
+    if (revision !== authRevision.current) {
+      return;
+    }
+
+    setUser(result.user);
+    setAuthError(result.error);
+    setIsLoading(false);
+  }, [restoreSavedSession]);
 
   return (
     <AuthContext.Provider
       value={{
         user,
         isLoading,
+        authError,
         login,
         register,
         logout,
         refreshUser,
+        retrySession,
       }}
     >
       {children}

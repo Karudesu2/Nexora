@@ -5,7 +5,15 @@ interface ApiErrorResponse {
   errors?: Record<string, string[]>;
 }
 
+export function isRequestCanceled(error: unknown): boolean {
+  return axios.isCancel(error) || (axios.isAxiosError(error) && error.code === "ERR_CANCELED");
+}
+
 export function getApiErrorMessage(error: unknown, fallback: string): string {
+  if (isRequestCanceled(error)) {
+    return "";
+  }
+
   if (!axios.isAxiosError<ApiErrorResponse>(error)) {
     return fallback;
   }
