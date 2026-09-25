@@ -8,6 +8,7 @@ use App\Models\Grade;
 use App\Models\SchoolYear;
 use App\Models\Subject;
 use App\Models\Term;
+use Illuminate\Support\Facades\Cache;
 
 class AcademicContextService
 {
@@ -17,7 +18,10 @@ class AcademicContextService
             SchoolYear::query()->where('is_active', true)->update(['is_active' => false]);
         }
 
-        return SchoolYear::create($data);
+        $schoolYear = SchoolYear::create($data);
+        $this->invalidatePlanningContext();
+
+        return $schoolYear;
     }
 
     public function createTerm(array $data): Term
@@ -29,20 +33,29 @@ class AcademicContextService
                 ->update(['is_active' => false]);
         }
 
-        return Term::create($data);
+        $term = Term::create($data);
+        $this->invalidatePlanningContext();
+
+        return $term;
     }
 
     public function createGrade(array $data): Grade
     {
-        return Grade::firstOrCreate(['name' => $data['name']]);
+        $grade = Grade::firstOrCreate(['name' => $data['name']]);
+        $this->invalidatePlanningContext();
+
+        return $grade;
     }
 
     public function createSubject(array $data): Subject
     {
-        return Subject::firstOrCreate(
+        $subject = Subject::firstOrCreate(
             ['name' => $data['name']],
             ['code' => $data['code'] ?? null]
         );
+        $this->invalidatePlanningContext();
+
+        return $subject;
     }
 
     public function createCurriculumVersion(array $data): CurriculumVersion
@@ -53,11 +66,30 @@ class AcademicContextService
                 ->update(['is_active' => false]);
         }
 
-        return CurriculumVersion::create($data);
+        $curriculumVersion = CurriculumVersion::create($data);
+        $this->invalidatePlanningContext();
+
+        return $curriculumVersion;
     }
 
     public function createCompetency(array $data): Competency
     {
-        return Competency::create($data);
+        $competency = Competency::create($data);
+        $this->invalidatePlanningContext();
+
+        return $competency;
+    }
+
+    public function updateCompetency(Competency $competency, array $data): Competency
+    {
+        $competency->update($data);
+        $this->invalidatePlanningContext();
+
+        return $competency->refresh();
+    }
+
+    private function invalidatePlanningContext(): void
+    {
+        Cache::forget('planning-context');
     }
 }

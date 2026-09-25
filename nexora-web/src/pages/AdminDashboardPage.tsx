@@ -22,7 +22,7 @@ export function AdminDashboardPage() {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const canAccess = user?.role_codes?.some((role) => ["school_administrator", "administrator"].includes(role)) ?? false;
+  const canAccess = user?.role_codes?.some((role) => ["school_administrator", "administrator", "system_administrator"].includes(role)) ?? false;
 
   useEffect(() => {
     if (!canAccess) {

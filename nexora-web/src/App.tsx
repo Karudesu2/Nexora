@@ -25,6 +25,9 @@ const FeedbackPage = lazy(() => import("./pages/FeedbackPage").then(({ FeedbackP
 const AdminFeedbackPage = lazy(() => import("./pages/FeedbackPage").then(({ AdminFeedbackPage: Page }) => ({ default: Page })));
 const AnnouncementsPage = lazy(() => import("./pages/AnnouncementsPage").then(({ AnnouncementsPage: Page }) => ({ default: Page })));
 
+const schoolAdministratorRoles = ["school_administrator", "administrator", "system_administrator"];
+const systemAdministratorRoles = ["system_administrator"];
+
 function PageLoader() {
   return <div className="flex min-h-64 items-center justify-center text-sm text-slate-500">Loading page...</div>;
 }
@@ -49,10 +52,14 @@ export default function App() {
             <Route path="/feedback" element={<FeedbackPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/alignment" element={<AlignmentPage />} />
-            <Route path="/administration" element={<AdministrationPage />} />
-            <Route path="/administration/users" element={<UserManagementPage />} />
-            <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-            <Route path="/admin/feedback" element={<AdminFeedbackPage />} />
+            <Route element={<ProtectedRoute allowedRoles={schoolAdministratorRoles} />}>
+              <Route path="/administration" element={<AdministrationPage />} />
+              <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+              <Route path="/admin/feedback" element={<AdminFeedbackPage />} />
+            </Route>
+            <Route element={<ProtectedRoute allowedRoles={systemAdministratorRoles} />}>
+              <Route path="/administration/users" element={<UserManagementPage />} />
+            </Route>
             <Route path="/pacing" element={<PacingPage />} />
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/settings" element={<SettingsPage />} />

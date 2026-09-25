@@ -176,7 +176,7 @@ export function FeedbackPage() {
         if (value) data.append(key, value);
       });
 
-      const response = await api.post<ApiResponse<FeedbackReport>>("/feedback", data, { headers: { "Content-Type": "multipart/form-data" } });
+      const response = await api.post<ApiResponse<FeedbackReport>>("/feedback", data);
       setNotice("Feedback submitted. The development team can now review it.");
       setForm({ category: "Bug Report", title: "", description: "", priority: "Medium", affected_module: "", steps_to_reproduce: "", suggested_solution: "", attachment: null });
       await load();

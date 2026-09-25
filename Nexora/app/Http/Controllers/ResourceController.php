@@ -48,7 +48,7 @@ class ResourceController extends ApiController
             'name' => ['required', 'string', 'max:255'],
             'type' => ['nullable', 'string', 'max:100'],
             'description' => ['nullable', 'string'],
-            'external_url' => ['nullable', 'url', 'max:2048'],
+            'external_url' => ['nullable', 'url:http,https', 'max:2048'],
             'file' => ['nullable', 'file', 'max:10240'],
             'is_public' => ['sometimes', 'boolean'],
         ]);
@@ -99,7 +99,7 @@ class ResourceController extends ApiController
             'name' => ['sometimes', 'string', 'max:255'],
             'type' => ['nullable', 'string', 'max:100'],
             'description' => ['nullable', 'string'],
-            'external_url' => ['nullable', 'url', 'max:2048'],
+            'external_url' => ['nullable', 'url:http,https', 'max:2048'],
             'is_public' => ['sometimes', 'boolean'],
         ]);
 

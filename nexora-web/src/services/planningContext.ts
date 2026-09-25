@@ -24,27 +24,39 @@ const cacheDurationMs = 5 * 60 * 1000;
 let cachedContext: PlanningContext | null = null;
 let cachedAt = 0;
 let pendingRequest: Promise<PlanningContext> | null = null;
+let cacheRevision = 0;
 
 export async function getPlanningContext(): Promise<PlanningContext> {
   if (cachedContext && Date.now() - cachedAt < cacheDurationMs) {
     return cachedContext;
   }
 
-  pendingRequest ??= api.get<ApiResponse<PlanningContext>>("/planning-context")
-    .then((response) => {
-      cachedContext = response.data.data;
-      cachedAt = Date.now();
+  if (!pendingRequest) {
+    const revision = cacheRevision;
+    const request = api.get<ApiResponse<PlanningContext>>("/planning-context")
+      .then((response) => {
+        if (revision === cacheRevision) {
+          cachedContext = response.data.data;
+          cachedAt = Date.now();
+        }
 
-      return cachedContext;
-    })
-    .finally(() => {
-      pendingRequest = null;
-    });
+        return response.data.data;
+      })
+      .finally(() => {
+        if (pendingRequest === request) {
+          pendingRequest = null;
+        }
+      });
+
+    pendingRequest = request;
+  }
 
   return pendingRequest;
 }
 
 export function invalidatePlanningContext(): void {
+  cacheRevision += 1;
   cachedContext = null;
   cachedAt = 0;
+  pendingRequest = null;
 }

@@ -183,6 +183,10 @@ Route::prefix('v1')->group(function () {
             AcademicContextController::class,
             'storeCompetency',
         ]);
+        Route::put('/admin/competencies/{competency}', [
+            AcademicContextController::class,
+            'updateCompetency',
+        ]);
 
         /*
         | Calendar

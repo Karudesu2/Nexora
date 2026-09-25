@@ -44,6 +44,7 @@ class CompetencyController extends ApiController
             )
             ->select([
                 'id',
+                'curriculum_version_id',
                 'grade_id',
                 'subject_id',
                 'term_id',

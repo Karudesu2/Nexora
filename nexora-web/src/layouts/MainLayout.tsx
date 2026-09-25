@@ -60,6 +60,7 @@ export default function MainLayout() {
     "administrator",
     "system_administrator",
   ].includes(role));
+  const canManageUsers = user?.role_codes?.includes("system_administrator");
   const primaryRole = user?.role_codes?.includes("system_administrator")
     ? "System Administrator"
     : user?.role_codes?.some((role) => ["school_administrator", "administrator"].includes(role))
@@ -97,7 +98,7 @@ export default function MainLayout() {
           {canManageAcademicContext ? <NavLink to="/admin/dashboard" onClick={closeNavigation} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${isActive ? "bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"}`}><LayoutDashboard size={19} strokeWidth={1.9} /><span>School overview</span></NavLink> : null}
           {canManageAcademicContext ? <NavLink to="/admin/feedback" onClick={closeNavigation} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${isActive ? "bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"}`}><MessageSquareText size={19} strokeWidth={1.9} /><span>Feedback management</span></NavLink> : null}
           {canManageAcademicContext ? <NavLink to="/administration" onClick={closeNavigation} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${isActive ? "bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"}`}><SlidersHorizontal size={19} strokeWidth={1.9} /><span>Academic setup</span></NavLink> : null}
-          {canManageAcademicContext ? <NavLink to="/administration/users" onClick={closeNavigation} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${isActive ? "bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"}`}><UsersRound size={19} strokeWidth={1.9} /><span>User management</span></NavLink> : null}
+          {canManageUsers ? <NavLink to="/administration/users" onClick={closeNavigation} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${isActive ? "bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"}`}><UsersRound size={19} strokeWidth={1.9} /><span>User management</span></NavLink> : null}
         </nav>
 
         <div className="mt-auto border-t border-slate-200/80 p-4 dark:border-slate-800">

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
   BarChart3,
@@ -15,10 +15,12 @@ import type { LucideIcon } from "lucide-react";
 import api from "../services/api";
 import { useAuth } from "../auth";
 import { getApiErrorMessage } from "../services/getApiErrorMessage";
+import { getPlanningContext } from "../services/planningContext";
 
 interface ApiResponse<T> { data: T; }
 interface CalendarEvent { id: number; title: string; type: string; start_date: string; end_date?: string | null; description?: string | null; is_instructional_day: boolean; }
-interface Competency { id: number; code: string; description: string; learning_area?: string | null; }
+interface Competency { id: number; curriculum_version_id: number; grade_id: number; subject_id: number; term_id: number; code: string; description: string; learning_area?: string | null; }
+interface PlanningOptions { grades: Array<{ id: number; name: string }>; subjects: Array<{ id: number; name: string }>; terms: Array<{ id: number; name: string }>; }
 interface Pacing { planned_lessons: number; completed_lessons: number; remaining_lessons: number; completion_percentage: number; expected_progress_percentage: number; progress_difference: number; status: string; recovery_actions: string[]; }
 interface LessonReport { total: number; lessons: Array<{ id: number; title: string; lesson_date: string; status: string; section: string; subject?: { name: string }; grade?: { name: string } }>; }
 interface ReportOverview { lessons: { total: number; completed: number; scheduled: number }; assessments: number; pacing: Pacing; }
@@ -33,23 +35,21 @@ function Loading({ label }: { label: string }) { return <div className="flex min
 function ErrorMessage({ error }: { error: string }) { return error ? <div className="flex gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"><AlertCircle className="size-5 shrink-0" />{error}</div> : null; }
 
 export function ModulePage({ module }: { module: "calendar" | "competencies" }) {
+  const { user } = useAuth();
+  const canManageCompetencies = user?.role_codes?.some((role) => ["school_administrator", "administrator", "system_administrator", "curriculum_coordinator"].includes(role)) ?? false;
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
-  const [competencies, setCompetencies] = useState<Competency[]>([]);
+  const [competencies] = useState<Competency[]>([]);
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const isCalendar = module === "calendar";
 
   useEffect(() => {
+    if (!isCalendar) return;
     const load = async () => {
       try {
-        if (isCalendar) {
-          const response = await api.get<ApiResponse<CalendarEvent[]>>("/calendar");
-          setCalendarEvents(response.data.data);
-        } else {
-          const response = await api.get<ApiResponse<Competency[]>>("/competencies");
-          setCompetencies(response.data.data);
-        }
+        const response = await api.get<ApiResponse<CalendarEvent[]>>("/calendar");
+        setCalendarEvents(response.data.data);
       } catch (loadError) { setError(getApiErrorMessage(loadError, "This information could not be loaded.")); } finally { setLoading(false); }
     };
     void load();
@@ -58,7 +58,96 @@ export function ModulePage({ module }: { module: "calendar" | "competencies" }) 
   const filteredEvents = useMemo(() => calendarEvents.filter((event) => `${event.title} ${event.type}`.toLowerCase().includes(query.toLowerCase())), [calendarEvents, query]);
   const filteredCompetencies = useMemo(() => competencies.filter((competency) => `${competency.code} ${competency.description} ${competency.learning_area || ""}`.toLowerCase().includes(query.toLowerCase())), [competencies, query]);
 
+  if (!isCalendar) return <CompetencyLibraryPage canManage={canManageCompetencies} />;
+
   return <div className="space-y-5"><PageHero eyebrow={isCalendar ? "Planning schedule" : "Curriculum"} title={isCalendar ? "School calendar" : "Competency library"} description={isCalendar ? "Review school events and instructional days that influence your lesson planning." : "Search the curriculum competencies available for lesson planning and mapping."} icon={isCalendar ? CalendarDays : BookOpen} /><section className={cardClass}><div className="flex flex-col gap-3 border-b border-slate-100 p-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between"><div><h2 className="font-semibold text-slate-900 dark:text-white">{isCalendar ? "Calendar events" : "Available competencies"}</h2><p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{isCalendar ? `${filteredEvents.length} events found` : `${filteredCompetencies.length} competencies found`}</p></div><label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-400"><Search className="size-4" /><input className="min-w-0 bg-transparent outline-none placeholder:text-slate-400" onChange={(event) => setQuery(event.target.value)} placeholder={isCalendar ? "Search events" : "Search by code or description"} type="search" value={query} /></label></div><ErrorMessage error={error} />{loading ? <Loading label="Loading records…" /> : isCalendar ? <div className="divide-y divide-slate-100 dark:divide-slate-800">{filteredEvents.map((event) => <article className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center" key={event.id}><div className="grid size-11 shrink-0 place-items-center rounded-xl bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300"><CalendarDays className="size-5" /></div><div className="min-w-0 flex-1"><h3 className="font-semibold text-slate-900 dark:text-white">{event.title}</h3><p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{event.type} · {event.start_date}{event.end_date ? ` to ${event.end_date}` : ""}</p>{event.description ? <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{event.description}</p> : null}</div><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${event.is_instructional_day ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>{event.is_instructional_day ? "Instructional" : "Non-instructional"}</span></article>)}{filteredEvents.length === 0 ? <p className="p-12 text-center text-sm text-slate-500 dark:text-slate-400">No calendar events match this search.</p> : null}</div> : <div className="divide-y divide-slate-100 dark:divide-slate-800">{filteredCompetencies.map((competency) => <article className="p-5" key={competency.id}><div className="flex flex-wrap items-center gap-2"><span className="rounded-lg bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700 dark:bg-sky-500/10 dark:text-sky-300">{competency.code}</span>{competency.learning_area ? <span className="text-xs text-slate-500 dark:text-slate-400">{competency.learning_area}</span> : null}</div><p className="mt-3 max-w-4xl text-sm leading-6 text-slate-700 dark:text-slate-300">{competency.description}</p></article>)}{filteredCompetencies.length === 0 ? <p className="p-12 text-center text-sm text-slate-500 dark:text-slate-400">No competencies match this search.</p> : null}</div>}</section></div>;
+}
+
+function CompetencyLibraryPage({ canManage }: { canManage: boolean }) {
+  const [competencies, setCompetencies] = useState<Competency[]>([]);
+  const [context, setContext] = useState<PlanningOptions | null>(null);
+  const [query, setQuery] = useState("");
+  const [gradeFilter, setGradeFilter] = useState("");
+  const [subjectFilter, setSubjectFilter] = useState("");
+  const [termFilter, setTermFilter] = useState("");
+  const [editing, setEditing] = useState<{ id: number; code: string; description: string; learningArea: string } | null>(null);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    const [competencyResponse, planningContext] = await Promise.all([
+      api.get<ApiResponse<Competency[]>>("/competencies"),
+      canManage ? getPlanningContext() : Promise.resolve(null),
+    ]);
+    setCompetencies(competencyResponse.data.data);
+    if (planningContext) setContext(planningContext);
+  }, [canManage]);
+
+  useEffect(() => {
+    let active = true;
+    const contextRequest = canManage ? getPlanningContext() : Promise.resolve(null);
+    void Promise.all([api.get<ApiResponse<Competency[]>>("/competencies"), contextRequest])
+      .then(([competencyResponse, planningContext]) => {
+        if (!active) return;
+        setCompetencies(competencyResponse.data.data);
+        if (planningContext) setContext(planningContext);
+      })
+      .catch((loadError: unknown) => { if (active) setError(getApiErrorMessage(loadError, "Competencies could not be loaded.")); })
+      .finally(() => { if (active) setIsLoading(false); });
+    return () => { active = false; };
+  }, [canManage]);
+
+  const gradeNames = useMemo(() => new Map(context?.grades.map((item) => [item.id, item.name]) ?? []), [context]);
+  const subjectNames = useMemo(() => new Map(context?.subjects.map((item) => [item.id, item.name]) ?? []), [context]);
+  const termNames = useMemo(() => new Map(context?.terms.map((item) => [item.id, item.name]) ?? []), [context]);
+  const filtered = competencies.filter((item) =>
+    (!gradeFilter || item.grade_id === Number(gradeFilter))
+    && (!subjectFilter || item.subject_id === Number(subjectFilter))
+    && (!termFilter || item.term_id === Number(termFilter))
+    && `${item.code} ${item.description} ${item.learning_area ?? ""}`.toLowerCase().includes(query.toLowerCase())
+  );
+
+  const save = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!editing) return;
+    setIsSaving(true);
+    setError("");
+    setNotice("");
+    try {
+      await api.put(`/admin/competencies/${editing.id}`, {
+        code: editing.code.trim(),
+        description: editing.description.trim(),
+        learning_area: editing.learningArea.trim() || null,
+      });
+      setEditing(null);
+      setNotice("Competency updated.");
+      await load();
+    } catch (saveError) {
+      setError(getApiErrorMessage(saveError, "The competency could not be updated."));
+    } finally { setIsSaving(false); }
+  };
+
+  return <div className="space-y-5">
+    <PageHero eyebrow="Curriculum" title="Competency library" description="Search and filter curriculum competencies, review their grade, subject, and term, then map them to lessons through Standards alignment." icon={BookOpen} />
+    {error ? <ErrorMessage error={error} /> : null}
+    {notice ? <p role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">{notice}</p> : null}
+    <section className={cardClass}>
+      <div className="grid gap-3 border-b border-slate-100 p-4 dark:border-slate-800 sm:grid-cols-2 xl:grid-cols-4">
+        <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-950"><Search className="size-4" /><input aria-label="Search competencies" className="min-w-0 bg-transparent outline-none placeholder:text-slate-400" onChange={(event) => setQuery(event.target.value)} placeholder="Search code or text" value={query} /></label>
+        <select aria-label="Filter by grade" className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" onChange={(event) => setGradeFilter(event.target.value)} value={gradeFilter}><option value="">All grades</option>{context?.grades.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
+        <select aria-label="Filter by subject" className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" onChange={(event) => setSubjectFilter(event.target.value)} value={subjectFilter}><option value="">All subjects</option>{context?.subjects.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
+        <select aria-label="Filter by term" className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" onChange={(event) => setTermFilter(event.target.value)} value={termFilter}><option value="">All terms</option>{context?.terms.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
+      </div>
+      <p className="px-5 pt-4 text-sm text-slate-500 dark:text-slate-400">{filtered.length} competencies found</p>
+      {isLoading ? <Loading label="Loading competencies…" /> : <div className="divide-y divide-slate-100 dark:divide-slate-800">{filtered.map((item) => <article className="flex flex-col gap-3 p-5 sm:flex-row sm:items-start" key={item.id}>
+        <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><span className="rounded-lg bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700 dark:bg-sky-500/10 dark:text-sky-300">{item.code}</span>{item.learning_area ? <span className="text-xs text-slate-500 dark:text-slate-400">{item.learning_area}</span> : null}</div><p className="mt-3 max-w-4xl text-sm leading-6 text-slate-700 dark:text-slate-300">{item.description}</p><p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{[gradeNames.get(item.grade_id), subjectNames.get(item.subject_id), termNames.get(item.term_id)].filter(Boolean).join(" · ")}</p></div>
+        {canManage ? <button className="inline-flex items-center gap-2 self-start rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800" onClick={() => { setError(""); setNotice(""); setEditing({ id: item.id, code: item.code, description: item.description, learningArea: item.learning_area ?? "" }); }} type="button"><Settings className="size-4" /> Edit</button> : null}
+      </article>)}{filtered.length === 0 ? <p className="p-12 text-center text-sm text-slate-500 dark:text-slate-400">No competencies match these filters.</p> : null}</div>}
+    </section>
+    {editing ? <form className={`${cardClass} space-y-4 p-5`} onSubmit={save}><div className="flex items-center justify-between"><h2 className="font-semibold text-slate-900 dark:text-white">Edit competency</h2><button className="text-sm text-sky-700 hover:underline dark:text-sky-300" onClick={() => setEditing(null)} type="button">Cancel</button></div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Code<input className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-950" maxLength={255} minLength={1} onChange={(event) => setEditing({ ...editing, code: event.target.value })} required value={editing.code} /></label><label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Description<textarea className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-950" onChange={(event) => setEditing({ ...editing, description: event.target.value })} required rows={4} value={editing.description} /></label><label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Learning area<input className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-950" maxLength={255} onChange={(event) => setEditing({ ...editing, learningArea: event.target.value })} value={editing.learningArea} /></label><button className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60 dark:bg-sky-600" disabled={isSaving} type="submit">{isSaving ? <Loader2 className="size-4 animate-spin" /> : null}{isSaving ? "Saving…" : "Save changes"}</button></form> : null}
+  </div>;
 }
 
 export function PacingPage() {

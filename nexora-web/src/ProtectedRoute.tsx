@@ -2,7 +2,11 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "./auth";
 import { hasExpiredSession } from "./services/authToken";
 
-export function ProtectedRoute() {
+interface ProtectedRouteProps {
+  allowedRoles?: readonly string[];
+}
+
+export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   const { user, isLoading, authError, retrySession } = useAuth();
   const location = useLocation();
 
@@ -31,6 +35,10 @@ export function ProtectedRoute() {
 
   if (!user) {
     return <Navigate to="/login" replace state={{ from: location, reason: hasExpiredSession() ? "session-expired" : undefined }} />;
+  }
+
+  if (allowedRoles && !user.role_codes?.some((role) => allowedRoles.includes(role))) {
+    return <Navigate to="/" replace />;
   }
 
   return <Outlet />;

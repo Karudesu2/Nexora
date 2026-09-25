@@ -97,9 +97,11 @@ export function AuthProvider({
       };
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
-        clearAuthToken();
+        if (getAuthToken() === token) {
+          clearAuthToken();
+        }
 
-        return { user: null, error: null, tokenExists: false };
+        return { user: null, error: null, tokenExists: Boolean(getAuthToken()) };
       }
 
       return {

@@ -528,9 +528,7 @@ function LessonPlanner({ startCreating = false }: { startCreating?: boolean }) {
       data.append("section", draft.section || "Imported");
       data.append("lesson_date", draft.date);
 
-      await api.post("/lessons/import", data, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      await api.post("/lessons/import", data);
 
       setImportFile(null);
       setNotice("Document imported. Open the draft to complete any missing sections.");

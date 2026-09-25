@@ -11,14 +11,10 @@
             "id": "02cb9fecd7bd8f85",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "nexora-mobile/node_modules/expo/node_modules/ws/README.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "README"
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Graph view"
             }
           }
         ]
@@ -187,17 +183,18 @@
   },
   "active": "02cb9fecd7bd8f85",
   "lastOpenFiles": [
-    "Nexora/storage/framework/views/f8ea387062e6c6958503b528373be9d0.php",
-    "Nexora/storage/framework/views/4a20db5eba8b9589167f34399336d811.php",
-    "Nexora/storage/framework/views/bf9ccb35ee08189cef12d4303e1a2ae0.php",
-    "Nexora/storage/framework/views/97c0c53a929bf93fb39ed03b8fcb8dad.php",
-    "Nexora/storage/framework/views/b61931c917658ce40d48e9a3a06973e3.php",
-    "Nexora/storage/framework/views/76a4cb6cfd86b5185748582e5d4d7323.php",
-    "Nexora/storage/framework/views/f698b03f4f83b13c572ce8474b3f311c.php",
-    "Nexora/storage/framework/views/3ddf21677e2e079ccf6dbd17717776f5.php",
-    "Nexora/storage/framework/views/4c1c30dd6f0cc2465a6d2fe724fc3a89.php",
-    "Nexora/storage/framework/views/934505bd6299f979386acfaa414b1e62.php",
-    "Nexora/storage/framework/views/83cf0cd27641308ac4736def28a77a0b.php",
+    "nexora-web/dist/assets/UserManagementPage-_FPzYRnp.js",
+    "nexora-web/dist/assets/trash-WLJEdOog.js",
+    "nexora-web/dist/assets/TemplateLibraryPage-DNSE01Z4.js",
+    "nexora-web/dist/assets/TeachingPages-B3qNSSD_.js",
+    "nexora-web/dist/assets/shield-check-C33tOtx0.js",
+    "nexora-web/dist/assets/save-DXiAxiQ0.js",
+    "nexora-web/dist/assets/plus-D4ykCPoI.js",
+    "nexora-web/dist/assets/planningContext-C5C7JkrO.js",
+    "nexora-web/dist/assets/ModulePage-DFGhZ_Em.js",
+    "nexora-web/dist/assets/loader-circle-zGfjq_DT.js",
+    "nexora-web/dist/assets/link-2-CsxCL2G0.js",
+    "nexora-mobile/node_modules/expo/node_modules/ws/README.md",
     "Nexora Documentation/09 Tasks/Future Improvements.md",
     "Nexora Documentation/09 Tasks/Fixed.md",
     "Nexora Documentation/09 Tasks/TODO.md",
@@ -222,7 +219,6 @@
     "Nexora Documentation/03 Backend/Routes.md",
     "Nexora Documentation/03 Backend/API Documentation.md",
     "Nexora Documentation/03 Backend/Laravel Structure.md",
-    "Nexora Documentation/02 Architecture/Authentication Flow.md",
     "Nexora/vendor/laravel/boost/resources/icons/boost.svg"
   ]
 }

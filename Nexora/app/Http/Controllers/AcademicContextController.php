@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CurriculumVersion;
+use App\Models\Competency;
 use App\Models\Grade;
 use App\Models\SchoolYear;
 use App\Models\Subject;
@@ -142,6 +143,30 @@ class AcademicContextController extends ApiController
         );
 
         return $this->success($competency, 'Competency created successfully.', 201);
+    }
+
+    public function updateCompetency(Request $request, Competency $competency): JsonResponse
+    {
+        $this->ensureCurriculumManager($request);
+
+        $data = $request->validate([
+            'code' => [
+                'sometimes', 'required', 'string', 'max:255',
+                Rule::unique('competencies', 'code')
+                    ->where(fn ($query) => $query
+                        ->where('curriculum_version_id', $competency->curriculum_version_id)
+                        ->where('grade_id', $competency->grade_id)
+                        ->where('subject_id', $competency->subject_id)
+                        ->where('term_id', $competency->term_id))
+                    ->ignore($competency->id),
+            ],
+            'description' => ['sometimes', 'required', 'string'],
+            'learning_area' => ['sometimes', 'nullable', 'string', 'max:255'],
+        ]);
+
+        $competency = $this->academicContextService->updateCompetency($competency, $data);
+
+        return $this->success($competency, 'Competency updated successfully.');
     }
 
     private function ensureAdministrator(Request $request): void
